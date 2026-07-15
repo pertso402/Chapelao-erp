@@ -88,6 +88,7 @@ export async function fecharFaturaMes(companyId: string) {
   const venc = empresa.dia_vencimento
     ? new Date(agora.getFullYear(), agora.getMonth() + 1, empresa.dia_vencimento).toISOString().slice(0, 10)
     : null;
+  const { data: contaRec } = await supabase.from("chart_of_accounts").select("id").eq("codigo", "REC-B2B").maybeSingle();
   await supabase.from("receivables").insert({
     company_id: companyId,
     company_invoice_id: fatura.id,
@@ -96,6 +97,7 @@ export async function fecharFaturaMes(companyId: string) {
     valor: Number(total.toFixed(2)),
     vencimento: venc,
     status: "pendente",
+    account_id: contaRec?.id ?? null,
   });
 
   await supabase.from("audit_events").insert({

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth/session";
-import { listarRecebiveis, resumoReceber, listarPagaveis, resumoPagar } from "@/lib/finance/queries";
+import { listarRecebiveis, resumoReceber, listarPagaveis, resumoPagar, listarPlanoContas, listarCentrosCusto, agendaFinanceira } from "@/lib/finance/queries";
 import { PageHeader } from "@/components/PageHeader";
 import { ReceberButton } from "@/components/b2b/ReceberButton";
 import { PagarButton } from "@/components/purchasing/PagarButton";
+import { NovaDespesaButton } from "@/components/finance/NovaDespesaButton";
 
 export const dynamic = "force-dynamic";
 
@@ -14,14 +15,49 @@ const dia = (iso: string | null) =>
 
 export default async function FinanceiroPage() {
   await requirePermission("finance.view");
-  const [recebiveis, resumo, pagaveis, resPagar] = await Promise.all([
+  const [recebiveis, resumo, pagaveis, resPagar, contas, centros, agenda] = await Promise.all([
     listarRecebiveis(), resumoReceber(), listarPagaveis(), resumoPagar(),
+    listarPlanoContas(), listarCentrosCusto(), agendaFinanceira(),
   ]);
   const hoje = new Date().toISOString().slice(0, 10);
+  const saldoProjetado = resumo.pendente - resPagar.pendente;
 
   return (
     <div>
-      <PageHeader title="Financeiro" subtitle="Contas a receber (B2B) e contas a pagar (compras)." />
+      <div className="flex items-start justify-between">
+        <PageHeader title="Financeiro" subtitle="Agenda, contas a receber (B2B) e contas a pagar." />
+        <NovaDespesaButton contas={contas.map((c) => ({ id: c.id, nome: c.nome, tipo: c.tipo }))} centros={centros.map((c) => ({ id: c.id, nome: c.nome }))} />
+      </div>
+
+      {/* Agenda financeira */}
+      <section className="mb-5 rounded-2xl border border-border bg-card p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-bold text-marino">Agenda financeira (pendentes)</h2>
+          <span className="text-sm">Saldo projetado: <strong className={saldoProjetado >= 0 ? "text-verde" : "text-rojo"}>{brl(saldoProjetado)}</strong></span>
+        </div>
+        {agenda.length === 0 ? (
+          <p className="text-sm text-muted">Nada pendente.</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {agenda.slice(0, 12).map((e, i) => (
+              <div key={i} className="flex items-center justify-between py-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${e.tipo === "receber" ? "bg-verde/15 text-verde" : "bg-rojo/10 text-rojo"}`}>
+                    {e.tipo === "receber" ? "RECEBER" : "PAGAR"}
+                  </span>
+                  <span className="text-marino">{e.descricao}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted">{dia(e.vencimento)}</span>
+                  <span className={`w-24 text-right font-bold ${e.tipo === "receber" ? "text-verde" : "text-rojo"}`}>
+                    {e.tipo === "receber" ? "+" : "−"} {brl(e.valor)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Card label="A receber (pendente)" valor={brl(resumo.pendente)} cor="var(--chap-azul)" />

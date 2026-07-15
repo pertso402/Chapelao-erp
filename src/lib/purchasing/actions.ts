@@ -70,7 +70,8 @@ export async function confirmarCompra(input: {
     await supabase.from("inventory_items").update({ custo_atual: i.custo_unitario }).eq("id", i.inventory_item_id);
   }
 
-  // 4) conta a pagar
+  // 4) conta a pagar (classificada como CMV/Compras)
+  const { data: contaCmv } = await supabase.from("chart_of_accounts").select("id").eq("codigo", "CMV").maybeSingle();
   await supabase.from("payables").insert({
     supplier_id: input.supplier_id,
     purchase_id: compra.id,
@@ -79,6 +80,7 @@ export async function confirmarCompra(input: {
     valor: total,
     vencimento: input.vencimento || null,
     status: "pendente",
+    account_id: contaCmv?.id ?? null,
   });
 
   await supabase.from("audit_events").insert({

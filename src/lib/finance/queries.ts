@@ -1,4 +1,39 @@
 import { createClient } from "@/lib/supabase/server";
+import type { Tables } from "@/types/database.generated";
+
+export async function listarPlanoContas(): Promise<Tables<"chart_of_accounts">[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("chart_of_accounts").select("*").order("ordem");
+  return data ?? [];
+}
+
+export async function listarCentrosCusto(): Promise<Tables<"cost_centers">[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("cost_centers").select("*").eq("ativo", true).order("nome");
+  return data ?? [];
+}
+
+export type EventoAgenda = {
+  tipo: "receber" | "pagar";
+  descricao: string;
+  valor: number;
+  vencimento: string | null;
+  status: string;
+};
+
+// Agenda financeira: obrigações e recebíveis pendentes ordenados por vencimento.
+export async function agendaFinanceira(): Promise<EventoAgenda[]> {
+  const supabase = await createClient();
+  const [{ data: recs }, { data: pays }] = await Promise.all([
+    supabase.from("receivables").select("descricao, valor, vencimento, status").eq("status", "pendente"),
+    supabase.from("payables").select("descricao, valor, vencimento, status").eq("status", "pendente"),
+  ]);
+  const eventos: EventoAgenda[] = [
+    ...(recs ?? []).map((r) => ({ tipo: "receber" as const, descricao: r.descricao, valor: Number(r.valor), vencimento: r.vencimento, status: r.status })),
+    ...(pays ?? []).map((p) => ({ tipo: "pagar" as const, descricao: p.descricao, valor: Number(p.valor), vencimento: p.vencimento, status: p.status })),
+  ];
+  return eventos.sort((a, b) => (a.vencimento ?? "9999").localeCompare(b.vencimento ?? "9999"));
+}
 
 export type RecebivelLista = {
   id: string;

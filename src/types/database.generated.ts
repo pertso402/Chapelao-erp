@@ -275,17 +275,17 @@ export type Database = {
         Row: {
           id: string; company_id: string | null; company_invoice_id: string | null; unit_id: string | null
           descricao: string; valor: number; vencimento: string | null; status: string
-          pago_em: string | null; recebido_por: string | null; created_at: string
+          pago_em: string | null; recebido_por: string | null; created_at: string; account_id: string | null
         }
         Insert: {
           id?: string; company_id?: string | null; company_invoice_id?: string | null; unit_id?: string | null
           descricao: string; valor: number; vencimento?: string | null; status?: string
-          pago_em?: string | null; recebido_por?: string | null; created_at?: string
+          pago_em?: string | null; recebido_por?: string | null; created_at?: string; account_id?: string | null
         }
         Update: {
           id?: string; company_id?: string | null; company_invoice_id?: string | null; unit_id?: string | null
           descricao?: string; valor?: number; vencimento?: string | null; status?: string
-          pago_em?: string | null; recebido_por?: string | null; created_at?: string
+          pago_em?: string | null; recebido_por?: string | null; created_at?: string; account_id?: string | null
         }
         Relationships: []
       }
@@ -386,9 +386,21 @@ export type Database = {
         Relationships: []
       }
       payables: {
-        Row: { id: string; supplier_id: string | null; purchase_id: string | null; unit_id: string | null; descricao: string; valor: number; vencimento: string | null; status: string; pago_em: string | null; pago_por: string | null; created_at: string }
-        Insert: { id?: string; supplier_id?: string | null; purchase_id?: string | null; unit_id?: string | null; descricao: string; valor: number; vencimento?: string | null; status?: string; pago_em?: string | null; pago_por?: string | null; created_at?: string }
-        Update: { id?: string; supplier_id?: string | null; purchase_id?: string | null; unit_id?: string | null; descricao?: string; valor?: number; vencimento?: string | null; status?: string; pago_em?: string | null; pago_por?: string | null; created_at?: string }
+        Row: { id: string; supplier_id: string | null; purchase_id: string | null; unit_id: string | null; descricao: string; valor: number; vencimento: string | null; status: string; pago_em: string | null; pago_por: string | null; created_at: string; account_id: string | null; cost_center_id: string | null; recorrente: boolean }
+        Insert: { id?: string; supplier_id?: string | null; purchase_id?: string | null; unit_id?: string | null; descricao: string; valor: number; vencimento?: string | null; status?: string; pago_em?: string | null; pago_por?: string | null; created_at?: string; account_id?: string | null; cost_center_id?: string | null; recorrente?: boolean }
+        Update: { id?: string; supplier_id?: string | null; purchase_id?: string | null; unit_id?: string | null; descricao?: string; valor?: number; vencimento?: string | null; status?: string; pago_em?: string | null; pago_por?: string | null; created_at?: string; account_id?: string | null; cost_center_id?: string | null; recorrente?: boolean }
+        Relationships: []
+      }
+      chart_of_accounts: {
+        Row: { id: string; codigo: string; nome: string; tipo: string; ordem: number }
+        Insert: { id?: string; codigo: string; nome: string; tipo: string; ordem?: number }
+        Update: { id?: string; codigo?: string; nome?: string; tipo?: string; ordem?: number }
+        Relationships: []
+      }
+      cost_centers: {
+        Row: { id: string; nome: string; ativo: boolean }
+        Insert: { id?: string; nome: string; ativo?: boolean }
+        Update: { id?: string; nome?: string; ativo?: boolean }
         Relationships: []
       }
     }
