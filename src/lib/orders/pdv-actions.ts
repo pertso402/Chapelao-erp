@@ -1,0 +1,134 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
+
+export type ItemBalcao = {
+  produto_id: string;
+  nome: string;
+  preco_unitario: number;
+  quantidade: number;
+};
+
+// Busca um cliente pelo telefone (só dígitos). Retorna nome/endereço se existir.
+export async function buscarClientePorTelefone(telefone: string) {
+  await requirePermission("pdv.use");
+  const tel = String(telefone).replace(/\D/g, "");
+  if (tel.length < 8) return { encontrado: false as const };
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("clientes")
+    .select("id, nome, endereco")
+    .eq("telefone", tel)
+    .maybeSingle();
+
+  if (!data) return { encontrado: false as const };
+  return { encontrado: true as const, nome: data.nome, endereco: data.endereco };
+}
+
+async function getTaxaEntrega(supabase: Awaited<ReturnType<typeof createClient>>): Promise<number> {
+  const { data } = await supabase
+    .from("info_restaurante")
+    .select("valor")
+    .eq("chave", "taxa_entrega")
+    .maybeSingle();
+  const t = Number(data?.valor);
+  return Number.isFinite(t) ? t : 5;
+}
+
+export async function criarPedidoBalcao(input: {
+  nome: string;
+  telefone: string;
+  tipo_entrega: "delivery" | "retirada";
+  endereco?: string;
+  forma_pagamento: string;
+  itens: ItemBalcao[];
+}) {
+  const user = await requirePermission("pdv.use");
+  const supabase = await createClient();
+
+  const itens = (input.itens ?? []).filter((i) => i.quantidade > 0);
+  if (!itens.length) return { ok: false as const, erro: "Adicione ao menos um item." };
+  if (!input.nome?.trim()) return { ok: false as const, erro: "Informe o nome do cliente." };
+  if (input.tipo_entrega === "delivery" && !input.endereco?.trim())
+    return { ok: false as const, erro: "Informe o endereço de entrega." };
+
+  const tel = String(input.telefone).replace(/\D/g, "");
+  const subtotal = itens.reduce((s, i) => s + i.preco_unitario * i.quantidade, 0);
+  const taxa = input.tipo_entrega === "delivery" ? await getTaxaEntrega(supabase) : 0;
+  const total = Number((subtotal + taxa).toFixed(2));
+
+  // Cliente: reaproveita por telefone ou cria.
+  let clienteId: string;
+  const { data: existente } = await supabase
+    .from("clientes")
+    .select("id")
+    .eq("telefone", tel)
+    .maybeSingle();
+
+  if (existente) {
+    clienteId = existente.id;
+    const patch: { nome: string; endereco?: string } = { nome: input.nome.trim() };
+    if (input.endereco?.trim()) patch.endereco = input.endereco.trim();
+    await supabase.from("clientes").update(patch).eq("id", clienteId);
+  } else {
+    const { data: novo, error: cErr } = await supabase
+      .from("clientes")
+      .insert({ nome: input.nome.trim(), telefone: tel, endereco: input.endereco?.trim() || null })
+      .select("id")
+      .single();
+    if (cErr) return { ok: false as const, erro: cErr.message };
+    clienteId = novo.id;
+  }
+
+  // Pedido (canal balcão, status inicial pendente — igual ao fluxo do agente).
+  const { data: pedido, error: pErr } = await supabase
+    .from("pedidos")
+    .insert({
+      cliente_id: clienteId,
+      canal: "balcao",
+      status: "pendente",
+      tipo_entrega: input.tipo_entrega,
+      endereco_entrega: input.endereco?.trim() || null,
+      forma_pagamento: input.forma_pagamento,
+      subtotal,
+      taxa_entrega: taxa,
+      total,
+    })
+    .select("id, numero_pedido")
+    .single();
+  if (pErr) return { ok: false as const, erro: pErr.message };
+
+  const rows = itens.map((i) => ({
+    pedido_id: pedido.id,
+    produto_id: i.produto_id,
+    nome_produto: i.nome,
+    quantidade: i.quantidade,
+    preco_unitario: i.preco_unitario,
+    total: Number((i.preco_unitario * i.quantidade).toFixed(2)),
+  }));
+  const { error: iErr } = await supabase.from("itens_pedido").insert(rows);
+  if (iErr) return { ok: false as const, erro: iErr.message };
+
+  // Pagamento no ledger + auditoria.
+  await supabase.from("order_payments").insert({
+    pedido_id: pedido.id,
+    forma_pagamento: input.forma_pagamento,
+    valor: total,
+    registrado_por: user.id,
+  });
+  await supabase.from("audit_events").insert({
+    user_id: user.id,
+    unit_id: user.profile?.unit_id ?? null,
+    acao: "pedido.criado_balcao",
+    entidade: "pedidos",
+    entidade_id: pedido.id,
+    valores_posteriores: { total, itens: itens.length, canal: "balcao" },
+    origem: "erp",
+  });
+
+  revalidatePath("/pedidos");
+  return { ok: true as const, numeroPedido: pedido.numero_pedido, total };
+}

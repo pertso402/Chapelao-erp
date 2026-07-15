@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/* ─── Identidade visual Chapelão ───────────────────────────────────────
+   Amarillo #FFC72B · Rojo #E6392F · Verde #118A4B · Azul #1D4EDB · Marino #1F2937
+------------------------------------------------------------------------ */
+:root {
+  --chap-amarillo: #ffc72b;
+  --chap-rojo: #e6392f;
+  --chap-verde: #118a4b;
+  --chap-azul: #1d4edb;
+  --chap-marino: #1f2937;
+
+  --background: #f7f6f2;
+  --foreground: #1f2937;
+  --card: #ffffff;
+  --border: #e6e4dd;
+  --muted: #6b7280;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-amarillo: var(--chap-amarillo);
+  --color-rojo: var(--chap-rojo);
+  --color-verde: var(--chap-verde);
+  --color-azul: var(--chap-azul);
+  --color-marino: var(--chap-marino);
+  --font-sans: var(--font-montserrat);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-montserrat), system-ui, sans-serif;
+}
+
+/* Faixa decorativa inspirada na barra do sombrero */
+.chap-stripe {
+  height: 6px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--chap-rojo) 0 24px,
+    var(--chap-amarillo) 24px 48px,
+    var(--chap-verde) 48px 72px,
+    var(--chap-azul) 72px 96px
+  );
+}
