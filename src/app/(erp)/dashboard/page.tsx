@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
+import { resumoReceber } from "@/lib/finance/queries";
 import { PageHeader } from "@/components/PageHeader";
 
 const brl = (v: number) =>
@@ -38,13 +39,26 @@ export default async function DashboardPage() {
   const supabase = await createClient();
 
   // Números reais dos pedidos já existentes no banco (agente/painel).
-  const { data: pedidos } = await supabase
-    .from("pedidos")
-    .select("total, status");
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
+
+  const [{ data: pedidos }, { data: pedidosB2B }, receber] = await Promise.all([
+    supabase.from("pedidos").select("total, status"),
+    supabase
+      .from("pedidos")
+      .select("total, status")
+      .not("company_id", "is", null)
+      .gte("created_at", inicioMes.toISOString()),
+    resumoReceber(),
+  ]);
 
   const totalPedidos = pedidos?.length ?? 0;
   const faturamento = (pedidos ?? []).reduce((s, p) => s + Number(p.total ?? 0), 0);
   const ticket = totalPedidos ? faturamento / totalPedidos : 0;
+  const consumoB2B = (pedidosB2B ?? [])
+    .filter((p) => !(p.status && /cancel/i.test(p.status)))
+    .reduce((s, p) => s + Number(p.total ?? 0), 0);
 
   return (
     <div>
@@ -62,9 +76,9 @@ export default async function DashboardPage() {
 
       <section className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Margem bruta" value="—" accent="var(--chap-verde)" demo />
-        <StatCard label="Despesas do mês" value="—" accent="var(--chap-rojo)" demo />
-        <StatCard label="Contas vencidas" value="—" accent="var(--chap-rojo)" demo />
-        <StatCard label="Consumo B2B" value="—" accent="var(--chap-azul)" demo />
+        <StatCard label="A receber (B2B)" value={brl(receber.pendente)} accent="var(--chap-azul)" />
+        <StatCard label="Contas vencidas" value={brl(receber.vencido)} accent="var(--chap-rojo)" />
+        <StatCard label="Consumo B2B (mês)" value={brl(consumoB2B)} accent="var(--chap-azul)" />
       </section>
 
       <div className="mt-8 rounded-2xl border border-border bg-card p-6">

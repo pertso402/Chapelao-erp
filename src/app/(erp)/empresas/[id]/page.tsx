@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/auth/session";
 import { getEmpresa, listarFuncionarios, consumoDoMes } from "@/lib/b2b/queries";
+import { listarFaturas, pedidosElegiveisDoMes } from "@/lib/b2b/invoices";
 import { EmpresaFormButton } from "@/components/b2b/EmpresaFormButton";
 import { FuncionarioFormButton } from "@/components/b2b/FuncionarioFormButton";
+import { FecharFaturaButton } from "@/components/b2b/FecharFaturaButton";
 
 export const dynamic = "force-dynamic";
 
@@ -16,10 +18,15 @@ export default async function EmpresaDetalhe({ params }: { params: Promise<{ id:
   const empresa = await getEmpresa(id);
   if (!empresa) notFound();
 
-  const [funcionarios, consumo] = await Promise.all([
+  const [funcionarios, consumo, faturas, elegiveis] = await Promise.all([
     listarFuncionarios(id),
     consumoDoMes(id),
+    listarFaturas(id),
+    pedidosElegiveisDoMes(id),
   ]);
+
+  const fmtMes = (iso: string) =>
+    new Date(iso + "T12:00:00").toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 
   return (
     <div className="space-y-6">
@@ -69,6 +76,34 @@ export default async function EmpresaDetalhe({ params }: { params: Promise<{ id:
               ))}
             </tbody>
           </table>
+        )}
+      </section>
+
+      {/* Faturamento */}
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-bold text-marino">Faturas</h2>
+          <FecharFaturaButton companyId={id} elegiveis={elegiveis} />
+        </div>
+        {faturas.length === 0 ? (
+          <p className="text-sm text-muted">
+            Nenhuma fatura fechada. {elegiveis > 0 ? `Há ${elegiveis} pedido(s) a faturar neste mês.` : "Sem pedidos a faturar."}
+          </p>
+        ) : (
+          <div className="divide-y divide-border">
+            {faturas.map((fat) => (
+              <Link key={fat.id} href={`/faturas/${fat.id}`} className="flex items-center justify-between py-2 text-sm hover:opacity-80">
+                <span className="capitalize text-marino">{fmtMes(fat.periodo_inicio)}</span>
+                <span className="flex items-center gap-3">
+                  <span className="text-xs text-muted">{fat.itens_count} pedidos</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${fat.status === "paga" ? "bg-verde/15 text-verde" : "bg-amarillo text-marino"}`}>
+                    {fat.status === "paga" ? "PAGA" : "FECHADA"}
+                  </span>
+                  <span className="w-24 text-right font-bold text-marino">{brl(Number(fat.total))}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
         )}
       </section>
 

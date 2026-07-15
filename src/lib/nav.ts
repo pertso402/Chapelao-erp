@@ -20,7 +20,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/empresas",     label: "Empresas (B2B)",  icon: "🏢", permission: "b2b.manage" },
   { href: "/estoque",      label: "Estoque",         icon: "📦", permission: "inventory.manage", demo: true },
   { href: "/compras",      label: "Compras",         icon: "🚚", permission: "purchasing.manage", demo: true },
-  { href: "/financeiro",   label: "Financeiro",      icon: "💰", permission: "finance.view", demo: true },
+  { href: "/financeiro",   label: "Financeiro",      icon: "💰", permission: "finance.view" },
   { href: "/relatorios",   label: "Relatórios",      icon: "📈", permission: "reports.view", demo: true },
   { href: "/configuracoes",label: "Configurações",   icon: "⚙️", permission: "settings.manage", demo: true },
 ];

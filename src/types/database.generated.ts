@@ -70,20 +70,21 @@ export type Database = {
       pedidos: {
         Row: {
           canal: string; cliente_id: string; company_id: string | null; company_employee_id: string | null
-          created_at: string | null; cupom_id: string | null; desconto: number | null
+          company_invoice_id: string | null; created_at: string | null; cupom_id: string | null; desconto: number | null
           endereco_entrega: string | null; forma_pagamento: string | null; id: string; numero_pedido: number
           observacao: string | null; status: string | null; subtotal: number | null; taxa_entrega: number | null
           tipo_entrega: string | null; total: number | null; troco_para: number | null; updated_at: string | null
         }
         Insert: {
           canal?: string; cliente_id: string; company_id?: string | null; company_employee_id?: string | null
-          created_at?: string | null; cupom_id?: string | null; desconto?: number | null
+          company_invoice_id?: string | null; created_at?: string | null; cupom_id?: string | null; desconto?: number | null
           endereco_entrega?: string | null; forma_pagamento?: string | null; id?: string; numero_pedido?: number
           observacao?: string | null; status?: string | null; subtotal?: number | null; taxa_entrega?: number | null
           tipo_entrega?: string | null; total?: number | null; troco_para?: number | null; updated_at?: string | null
         }
         Update: {
-          canal?: string; cliente_id?: string; created_at?: string | null; cupom_id?: string | null; desconto?: number | null
+          canal?: string; cliente_id?: string; company_id?: string | null; company_employee_id?: string | null
+          company_invoice_id?: string | null; created_at?: string | null; cupom_id?: string | null; desconto?: number | null
           endereco_entrega?: string | null; forma_pagamento?: string | null; id?: string; numero_pedido?: number
           observacao?: string | null; status?: string | null; subtotal?: number | null; taxa_entrega?: number | null
           tipo_entrega?: string | null; total?: number | null; troco_para?: number | null; updated_at?: string | null
@@ -231,6 +232,60 @@ export type Database = {
           id?: string; company_id?: string; nome?: string; telefone?: string | null; cpf?: string | null
           matricula?: string | null; setor?: string | null; limite_mensal?: number; limite_diario?: number
           ativo?: boolean; created_at?: string
+        }
+        Relationships: []
+      }
+      company_invoices: {
+        Row: {
+          id: string; company_id: string; unit_id: string | null; periodo_inicio: string; periodo_fim: string
+          status: string; subtotal: number; desconto: number; total: number; itens_count: number
+          fechada_por: string | null; fechada_em: string; created_at: string
+        }
+        Insert: {
+          id?: string; company_id: string; unit_id?: string | null; periodo_inicio: string; periodo_fim: string
+          status?: string; subtotal?: number; desconto?: number; total?: number; itens_count?: number
+          fechada_por?: string | null; fechada_em?: string; created_at?: string
+        }
+        Update: {
+          id?: string; company_id?: string; unit_id?: string | null; periodo_inicio?: string; periodo_fim?: string
+          status?: string; subtotal?: number; desconto?: number; total?: number; itens_count?: number
+          fechada_por?: string | null; fechada_em?: string; created_at?: string
+        }
+        Relationships: []
+      }
+      company_invoice_items: {
+        Row: {
+          id: string; invoice_id: string; pedido_id: string | null; company_employee_id: string | null
+          employee_nome: string | null; numero_pedido: number | null; data_pedido: string | null
+          descricao: string | null; valor: number
+        }
+        Insert: {
+          id?: string; invoice_id: string; pedido_id?: string | null; company_employee_id?: string | null
+          employee_nome?: string | null; numero_pedido?: number | null; data_pedido?: string | null
+          descricao?: string | null; valor?: number
+        }
+        Update: {
+          id?: string; invoice_id?: string; pedido_id?: string | null; company_employee_id?: string | null
+          employee_nome?: string | null; numero_pedido?: number | null; data_pedido?: string | null
+          descricao?: string | null; valor?: number
+        }
+        Relationships: []
+      }
+      receivables: {
+        Row: {
+          id: string; company_id: string | null; company_invoice_id: string | null; unit_id: string | null
+          descricao: string; valor: number; vencimento: string | null; status: string
+          pago_em: string | null; recebido_por: string | null; created_at: string
+        }
+        Insert: {
+          id?: string; company_id?: string | null; company_invoice_id?: string | null; unit_id?: string | null
+          descricao: string; valor: number; vencimento?: string | null; status?: string
+          pago_em?: string | null; recebido_por?: string | null; created_at?: string
+        }
+        Update: {
+          id?: string; company_id?: string | null; company_invoice_id?: string | null; unit_id?: string | null
+          descricao?: string; valor?: number; vencimento?: string | null; status?: string
+          pago_em?: string | null; recebido_por?: string | null; created_at?: string
         }
         Relationships: []
       }
