@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
-import { resumoReceber } from "@/lib/finance/queries";
+import { resumoReceber, resumoPagar } from "@/lib/finance/queries";
 import { cmvTeoricoMes } from "@/lib/recipes/queries";
 import { PageHeader } from "@/components/PageHeader";
 
@@ -54,6 +54,7 @@ export default async function DashboardPage() {
     resumoReceber(),
     cmvTeoricoMes(),
   ]);
+  const pagar = await resumoPagar();
 
   const totalPedidos = pedidos?.length ?? 0;
   const faturamento = (pedidos ?? []).reduce((s, p) => s + Number(p.total ?? 0), 0);
@@ -80,7 +81,7 @@ export default async function DashboardPage() {
       <section className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Margem bruta (teórica)" value={cmvMes.receita > 0 ? `${margemBrutaPct.toFixed(0)}%` : "—"} accent="var(--chap-verde)" />
         <StatCard label="A receber (B2B)" value={brl(receber.pendente)} accent="var(--chap-azul)" />
-        <StatCard label="Contas vencidas" value={brl(receber.vencido)} accent="var(--chap-rojo)" />
+        <StatCard label="A pagar" value={brl(pagar.pendente)} accent="var(--chap-marino)" />
         <StatCard label="Consumo B2B (mês)" value={brl(consumoB2B)} accent="var(--chap-azul)" />
       </section>
 

@@ -367,6 +367,30 @@ export type Database = {
         Update: { recipe_id?: string; version_id?: string; custo_porcao?: number }
         Relationships: []
       }
+      suppliers: {
+        Row: { id: string; unit_id: string | null; nome: string; cnpj: string | null; whatsapp: string | null; contato: string | null; ativo: boolean; created_at: string }
+        Insert: { id?: string; unit_id?: string | null; nome: string; cnpj?: string | null; whatsapp?: string | null; contato?: string | null; ativo?: boolean; created_at?: string }
+        Update: { id?: string; unit_id?: string | null; nome?: string; cnpj?: string | null; whatsapp?: string | null; contato?: string | null; ativo?: boolean; created_at?: string }
+        Relationships: []
+      }
+      purchases: {
+        Row: { id: string; supplier_id: string | null; unit_id: string | null; status: string; total: number; observacao: string | null; created_by: string | null; created_at: string; confirmada_em: string | null }
+        Insert: { id?: string; supplier_id?: string | null; unit_id?: string | null; status?: string; total?: number; observacao?: string | null; created_by?: string | null; created_at?: string; confirmada_em?: string | null }
+        Update: { id?: string; supplier_id?: string | null; unit_id?: string | null; status?: string; total?: number; observacao?: string | null; created_by?: string | null; created_at?: string; confirmada_em?: string | null }
+        Relationships: []
+      }
+      purchase_items: {
+        Row: { id: string; purchase_id: string; inventory_item_id: string; quantidade: number; custo_unitario: number; total: number }
+        Insert: { id?: string; purchase_id: string; inventory_item_id: string; quantidade: number; custo_unitario?: number; total?: number }
+        Update: { id?: string; purchase_id?: string; inventory_item_id?: string; quantidade?: number; custo_unitario?: number; total?: number }
+        Relationships: []
+      }
+      payables: {
+        Row: { id: string; supplier_id: string | null; purchase_id: string | null; unit_id: string | null; descricao: string; valor: number; vencimento: string | null; status: string; pago_em: string | null; pago_por: string | null; created_at: string }
+        Insert: { id?: string; supplier_id?: string | null; purchase_id?: string | null; unit_id?: string | null; descricao: string; valor: number; vencimento?: string | null; status?: string; pago_em?: string | null; pago_por?: string | null; created_at?: string }
+        Update: { id?: string; supplier_id?: string | null; purchase_id?: string | null; unit_id?: string | null; descricao?: string; valor?: number; vencimento?: string | null; status?: string; pago_em?: string | null; pago_por?: string | null; created_at?: string }
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {
