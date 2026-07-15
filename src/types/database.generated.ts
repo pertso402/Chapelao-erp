@@ -343,6 +343,30 @@ export type Database = {
         Update: { item_id?: string; saldo?: number }
         Relationships: []
       }
+      recipes: {
+        Row: { id: string; produto_id: string; nome: string; created_at: string }
+        Insert: { id?: string; produto_id: string; nome: string; created_at?: string }
+        Update: { id?: string; produto_id?: string; nome?: string; created_at?: string }
+        Relationships: []
+      }
+      recipe_versions: {
+        Row: { id: string; recipe_id: string; versao: number; ativa: boolean; rendimento: number; observacao: string | null; created_by: string | null; created_at: string }
+        Insert: { id?: string; recipe_id: string; versao?: number; ativa?: boolean; rendimento?: number; observacao?: string | null; created_by?: string | null; created_at?: string }
+        Update: { id?: string; recipe_id?: string; versao?: number; ativa?: boolean; rendimento?: number; observacao?: string | null; created_by?: string | null; created_at?: string }
+        Relationships: []
+      }
+      recipe_items: {
+        Row: { id: string; version_id: string; inventory_item_id: string; quantidade: number }
+        Insert: { id?: string; version_id: string; inventory_item_id: string; quantidade?: number }
+        Update: { id?: string; version_id?: string; inventory_item_id?: string; quantidade?: number }
+        Relationships: []
+      }
+      v_recipe_cost: {
+        Row: { recipe_id: string; version_id: string; custo_porcao: number }
+        Insert: { recipe_id?: string; version_id?: string; custo_porcao?: number }
+        Update: { recipe_id?: string; version_id?: string; custo_porcao?: number }
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {

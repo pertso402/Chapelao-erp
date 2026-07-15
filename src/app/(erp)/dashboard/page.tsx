@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 import { resumoReceber } from "@/lib/finance/queries";
+import { cmvTeoricoMes } from "@/lib/recipes/queries";
 import { PageHeader } from "@/components/PageHeader";
 
 const brl = (v: number) =>
@@ -43,7 +44,7 @@ export default async function DashboardPage() {
   inicioMes.setDate(1);
   inicioMes.setHours(0, 0, 0, 0);
 
-  const [{ data: pedidos }, { data: pedidosB2B }, receber] = await Promise.all([
+  const [{ data: pedidos }, { data: pedidosB2B }, receber, cmvMes] = await Promise.all([
     supabase.from("pedidos").select("total, status"),
     supabase
       .from("pedidos")
@@ -51,6 +52,7 @@ export default async function DashboardPage() {
       .not("company_id", "is", null)
       .gte("created_at", inicioMes.toISOString()),
     resumoReceber(),
+    cmvTeoricoMes(),
   ]);
 
   const totalPedidos = pedidos?.length ?? 0;
@@ -59,6 +61,7 @@ export default async function DashboardPage() {
   const consumoB2B = (pedidosB2B ?? [])
     .filter((p) => !(p.status && /cancel/i.test(p.status)))
     .reduce((s, p) => s + Number(p.total ?? 0), 0);
+  const margemBrutaPct = cmvMes.receita > 0 ? ((cmvMes.receita - cmvMes.cmv) / cmvMes.receita) * 100 : 0;
 
   return (
     <div>
@@ -71,11 +74,11 @@ export default async function DashboardPage() {
         <StatCard label="Pedidos (total)" value={String(totalPedidos)} accent="var(--chap-azul)" />
         <StatCard label="Faturamento" value={brl(faturamento)} accent="var(--chap-verde)" />
         <StatCard label="Ticket médio" value={brl(ticket)} accent="var(--chap-marino)" />
-        <StatCard label="CMV teórico" value="—" accent="var(--chap-rojo)" demo />
+        <StatCard label="CMV teórico (mês)" value={brl(cmvMes.cmv)} accent="var(--chap-rojo)" />
       </section>
 
       <section className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Margem bruta" value="—" accent="var(--chap-verde)" demo />
+        <StatCard label="Margem bruta (teórica)" value={cmvMes.receita > 0 ? `${margemBrutaPct.toFixed(0)}%` : "—"} accent="var(--chap-verde)" />
         <StatCard label="A receber (B2B)" value={brl(receber.pendente)} accent="var(--chap-azul)" />
         <StatCard label="Contas vencidas" value={brl(receber.vencido)} accent="var(--chap-rojo)" />
         <StatCard label="Consumo B2B (mês)" value={brl(consumoB2B)} accent="var(--chap-azul)" />

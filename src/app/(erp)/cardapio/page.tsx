@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { requirePermission } from "@/lib/auth/session";
 import { listarCardapioComOpcoes } from "@/lib/catalog/queries";
+import { custoPorProduto } from "@/lib/recipes/queries";
 import { PageHeader } from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +19,7 @@ function regraGrupo(min: number, max: number | null): string {
 
 export default async function CardapioPage() {
   await requirePermission("catalog.manage");
-  const produtos = await listarCardapioComOpcoes();
+  const [produtos, custos] = await Promise.all([listarCardapioComOpcoes(), custoPorProduto()]);
 
   const porCategoria: Record<string, typeof produtos> = {};
   for (const p of produtos) (porCategoria[p.categoria || "Outros"] ||= []).push(p);
@@ -40,6 +42,27 @@ export default async function CardapioPage() {
                     <h3 className="font-bold text-marino">{p.nome}</h3>
                     <span className="font-extrabold text-verde">{brl(p.preco)}</span>
                   </div>
+
+                  {(() => {
+                    const custo = custos.get(p.id);
+                    const temFicha = custo != null;
+                    const margem = temFicha ? p.preco - custo! : 0;
+                    const margemPct = temFicha && p.preco > 0 ? (margem / p.preco) * 100 : 0;
+                    return (
+                      <div className="mt-1 flex items-center gap-2 text-xs">
+                        {temFicha ? (
+                          <span className="text-muted">
+                            custo {brl(custo!)} · margem <span className="font-bold text-verde">{margemPct.toFixed(0)}%</span>
+                          </span>
+                        ) : (
+                          <span className="text-muted">sem ficha técnica</span>
+                        )}
+                        <Link href={`/fichas/${p.id}`} className="ml-auto font-semibold text-azul hover:underline">
+                          {temFicha ? "ficha técnica" : "criar ficha"}
+                        </Link>
+                      </div>
+                    );
+                  })()}
 
                   {p.grupos.length > 0 && (
                     <div className="mt-3 space-y-2">
