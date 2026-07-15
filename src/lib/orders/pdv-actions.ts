@@ -49,6 +49,9 @@ export async function criarPedidoBalcao(input: {
   endereco?: string;
   forma_pagamento: string;
   itens: ItemBalcao[];
+  company_id?: string | null;
+  company_employee_id?: string | null;
+  percentual_desconto?: number;
 }) {
   const user = await requirePermission("pdv.use");
   const supabase = await createClient();
@@ -62,7 +65,9 @@ export async function criarPedidoBalcao(input: {
   const tel = String(input.telefone).replace(/\D/g, "");
   const subtotal = itens.reduce((s, i) => s + i.preco_unitario * i.quantidade, 0);
   const taxa = input.tipo_entrega === "delivery" ? await getTaxaEntrega(supabase) : 0;
-  const total = Number((subtotal + taxa).toFixed(2));
+  const pct = Math.max(0, Math.min(100, Number(input.percentual_desconto ?? 0)));
+  const desconto = Number(((subtotal * pct) / 100).toFixed(2));
+  const total = Number((subtotal + taxa - desconto).toFixed(2));
 
   // Cliente: reaproveita por telefone ou cria.
   let clienteId: string;
@@ -99,7 +104,10 @@ export async function criarPedidoBalcao(input: {
       forma_pagamento: input.forma_pagamento,
       subtotal,
       taxa_entrega: taxa,
+      desconto,
       total,
+      company_id: input.company_id ?? null,
+      company_employee_id: input.company_employee_id ?? null,
     })
     .select("id, numero_pedido")
     .single();

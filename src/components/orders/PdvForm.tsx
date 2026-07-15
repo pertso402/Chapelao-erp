@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { ProdutoComOpcoes } from "@/lib/catalog/queries";
+import type { EmpresaPdv } from "@/lib/b2b/queries";
 import { buscarClientePorTelefone, criarPedidoBalcao } from "@/lib/orders/pdv-actions";
 import { MontagemModal } from "@/components/orders/MontagemModal";
 
@@ -19,7 +20,7 @@ export type LinhaCarrinho = {
   composicao?: string;
 };
 
-export function PdvForm({ produtos }: { produtos: ProdutoComOpcoes[] }) {
+export function PdvForm({ produtos, empresas = [] }: { produtos: ProdutoComOpcoes[]; empresas?: EmpresaPdv[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -33,6 +34,11 @@ export function PdvForm({ produtos }: { produtos: ProdutoComOpcoes[] }) {
   const [montando, setMontando] = useState<ProdutoComOpcoes | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
+  const [empresaId, setEmpresaId] = useState("");
+  const [funcionarioId, setFuncionarioId] = useState("");
+
+  const empresa = empresas.find((e) => e.id === empresaId);
+  const pctDesconto = empresa?.percentual_desconto ?? 0;
 
   const categorias = useMemo(() => {
     const filtro = busca.trim().toLowerCase();
@@ -43,6 +49,8 @@ export function PdvForm({ produtos }: { produtos: ProdutoComOpcoes[] }) {
   }, [produtos, busca]);
 
   const subtotal = carrinho.reduce((s, l) => s + l.preco_unitario * l.quantidade, 0);
+  const descontoB2B = Number(((subtotal * pctDesconto) / 100).toFixed(2));
+  const totalComDesconto = subtotal - descontoB2B;
 
   function adicionarProduto(p: ProdutoComOpcoes) {
     if (p.grupos.length > 0) {
@@ -101,6 +109,9 @@ export function PdvForm({ produtos }: { produtos: ProdutoComOpcoes[] }) {
           opcoes: l.opcoes,
           composicao: l.composicao,
         })),
+        company_id: empresaId || null,
+        company_employee_id: funcionarioId || null,
+        percentual_desconto: pctDesconto,
       });
       if (!r.ok) {
         setMsg(r.erro);
@@ -111,6 +122,8 @@ export function PdvForm({ produtos }: { produtos: ProdutoComOpcoes[] }) {
       setNome("");
       setTelefone("");
       setEndereco("");
+      setEmpresaId("");
+      setFuncionarioId("");
       router.refresh();
     });
   }
@@ -188,6 +201,34 @@ export function PdvForm({ produtos }: { produtos: ProdutoComOpcoes[] }) {
           <option value="cartao">Cartão</option>
         </select>
 
+        {empresas.length > 0 && (
+          <div className="rounded-lg bg-azul/5 p-2">
+            <div className="mb-1 text-xs font-bold text-azul">Pedido corporativo (B2B)</div>
+            <select
+              value={empresaId}
+              onChange={(e) => { setEmpresaId(e.target.value); setFuncionarioId(""); }}
+              className="mb-1 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-azul"
+            >
+              <option value="">— Sem empresa —</option>
+              {empresas.map((e) => (
+                <option key={e.id} value={e.id}>{e.nome}{e.percentual_desconto > 0 ? ` (${e.percentual_desconto}%)` : ""}</option>
+              ))}
+            </select>
+            {empresa && (
+              <select
+                value={funcionarioId}
+                onChange={(e) => setFuncionarioId(e.target.value)}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-azul"
+              >
+                <option value="">— Funcionário —</option>
+                {empresa.funcionarios.map((f) => (
+                  <option key={f.id} value={f.id}>{f.nome}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
+
         <div className="min-h-[60px] space-y-2 border-y border-border py-2 text-sm">
           {carrinho.length === 0 ? (
             <p className="text-muted">Toque nos produtos para adicionar.</p>
@@ -209,9 +250,23 @@ export function PdvForm({ produtos }: { produtos: ProdutoComOpcoes[] }) {
           )}
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted">Subtotal</span>
-          <span className="text-lg font-extrabold text-marino">{brl(subtotal)}</span>
+        <div className="space-y-0.5">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted">Subtotal</span>
+            <span className="font-semibold text-marino">{brl(subtotal)}</span>
+          </div>
+          {descontoB2B > 0 && (
+            <>
+              <div className="flex items-center justify-between text-sm text-verde">
+                <span>Desconto B2B ({pctDesconto}%)</span>
+                <span>− {brl(descontoB2B)}</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-border pt-1">
+                <span className="text-sm text-muted">Total</span>
+                <span className="text-lg font-extrabold text-marino">{brl(totalComDesconto)}</span>
+              </div>
+            </>
+          )}
         </div>
 
         {msg && <p className="rounded-lg bg-amarillo/20 px-3 py-2 text-sm text-marino">{msg}</p>}

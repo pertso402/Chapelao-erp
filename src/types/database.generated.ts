@@ -69,13 +69,15 @@ export type Database = {
       }
       pedidos: {
         Row: {
-          canal: string; cliente_id: string; created_at: string | null; cupom_id: string | null; desconto: number | null
+          canal: string; cliente_id: string; company_id: string | null; company_employee_id: string | null
+          created_at: string | null; cupom_id: string | null; desconto: number | null
           endereco_entrega: string | null; forma_pagamento: string | null; id: string; numero_pedido: number
           observacao: string | null; status: string | null; subtotal: number | null; taxa_entrega: number | null
           tipo_entrega: string | null; total: number | null; troco_para: number | null; updated_at: string | null
         }
         Insert: {
-          canal?: string; cliente_id: string; created_at?: string | null; cupom_id?: string | null; desconto?: number | null
+          canal?: string; cliente_id: string; company_id?: string | null; company_employee_id?: string | null
+          created_at?: string | null; cupom_id?: string | null; desconto?: number | null
           endereco_entrega?: string | null; forma_pagamento?: string | null; id?: string; numero_pedido?: number
           observacao?: string | null; status?: string | null; subtotal?: number | null; taxa_entrega?: number | null
           tipo_entrega?: string | null; total?: number | null; troco_para?: number | null; updated_at?: string | null
@@ -191,6 +193,45 @@ export type Database = {
         Row: { id: string; item_pedido_id: string; option_id: string | null; nome_congelado: string; preco_congelado: number; created_at: string }
         Insert: { id?: string; item_pedido_id: string; option_id?: string | null; nome_congelado: string; preco_congelado?: number; created_at?: string }
         Update: { id?: string; item_pedido_id?: string; option_id?: string | null; nome_congelado?: string; preco_congelado?: number; created_at?: string }
+        Relationships: []
+      }
+      companies: {
+        Row: {
+          id: string; unit_id: string | null; razao_social: string; nome_fantasia: string | null; cnpj: string | null
+          whatsapp: string | null; responsavel_financeiro: string | null; percentual_desconto: number
+          dia_fechamento: number | null; dia_vencimento: number | null; limite_credito: number; ativo: boolean
+          created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; unit_id?: string | null; razao_social: string; nome_fantasia?: string | null; cnpj?: string | null
+          whatsapp?: string | null; responsavel_financeiro?: string | null; percentual_desconto?: number
+          dia_fechamento?: number | null; dia_vencimento?: number | null; limite_credito?: number; ativo?: boolean
+          created_at?: string; updated_at?: string
+        }
+        Update: {
+          id?: string; unit_id?: string | null; razao_social?: string; nome_fantasia?: string | null; cnpj?: string | null
+          whatsapp?: string | null; responsavel_financeiro?: string | null; percentual_desconto?: number
+          dia_fechamento?: number | null; dia_vencimento?: number | null; limite_credito?: number; ativo?: boolean
+          created_at?: string; updated_at?: string
+        }
+        Relationships: []
+      }
+      company_employees: {
+        Row: {
+          id: string; company_id: string; nome: string; telefone: string | null; cpf: string | null
+          matricula: string | null; setor: string | null; limite_mensal: number; limite_diario: number
+          ativo: boolean; created_at: string
+        }
+        Insert: {
+          id?: string; company_id: string; nome: string; telefone?: string | null; cpf?: string | null
+          matricula?: string | null; setor?: string | null; limite_mensal?: number; limite_diario?: number
+          ativo?: boolean; created_at?: string
+        }
+        Update: {
+          id?: string; company_id?: string; nome?: string; telefone?: string | null; cpf?: string | null
+          matricula?: string | null; setor?: string | null; limite_mensal?: number; limite_diario?: number
+          ativo?: boolean; created_at?: string
+        }
         Relationships: []
       }
     }

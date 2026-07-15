@@ -1,5 +1,6 @@
 import { requirePermission } from "@/lib/auth/session";
 import { listarCardapioComOpcoes } from "@/lib/catalog/queries";
+import { listarEmpresasParaPdv } from "@/lib/b2b/queries";
 import { PageHeader } from "@/components/PageHeader";
 import { PdvForm } from "@/components/orders/PdvForm";
 
@@ -7,12 +8,15 @@ export const dynamic = "force-dynamic";
 
 export default async function PdvPage() {
   await requirePermission("pdv.use");
-  const produtos = await listarCardapioComOpcoes();
+  const [produtos, empresas] = await Promise.all([
+    listarCardapioComOpcoes(),
+    listarEmpresasParaPdv(),
+  ]);
 
   return (
     <div>
       <PageHeader title="PDV / Balcão" subtitle="Monte o pedido em poucos cliques." />
-      <PdvForm produtos={produtos} />
+      <PdvForm produtos={produtos} empresas={empresas} />
     </div>
   );
 }

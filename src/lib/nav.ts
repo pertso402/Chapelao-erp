@@ -17,7 +17,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/cozinha",      label: "Cozinha",         icon: "🍲", permission: "kitchen.view" },
   { href: "/clientes",     label: "Clientes",        icon: "👥", permission: "customers.manage" },
   { href: "/cardapio",     label: "Cardápio",        icon: "📋", permission: "catalog.manage" },
-  { href: "/empresas",     label: "Empresas (B2B)",  icon: "🏢", permission: "b2b.manage", demo: true },
+  { href: "/empresas",     label: "Empresas (B2B)",  icon: "🏢", permission: "b2b.manage" },
   { href: "/estoque",      label: "Estoque",         icon: "📦", permission: "inventory.manage", demo: true },
   { href: "/compras",      label: "Compras",         icon: "🚚", permission: "purchasing.manage", demo: true },
   { href: "/financeiro",   label: "Financeiro",      icon: "💰", permission: "finance.view", demo: true },
