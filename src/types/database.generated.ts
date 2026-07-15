@@ -169,6 +169,30 @@ export type Database = {
         Update: { id?: string; chave?: string; valor?: string; descricao?: string | null }
         Relationships: []
       }
+      option_groups: {
+        Row: { id: string; nome: string; min_escolhas: number; max_escolhas: number | null; created_at: string }
+        Insert: { id?: string; nome: string; min_escolhas?: number; max_escolhas?: number | null; created_at?: string }
+        Update: { id?: string; nome?: string; min_escolhas?: number; max_escolhas?: number | null; created_at?: string }
+        Relationships: []
+      }
+      options: {
+        Row: { id: string; group_id: string; nome: string; preco_adicional: number; disponivel: boolean; ordem: number }
+        Insert: { id?: string; group_id: string; nome: string; preco_adicional?: number; disponivel?: boolean; ordem?: number }
+        Update: { id?: string; group_id?: string; nome?: string; preco_adicional?: number; disponivel?: boolean; ordem?: number }
+        Relationships: []
+      }
+      product_option_groups: {
+        Row: { produto_id: string; group_id: string; ordem: number }
+        Insert: { produto_id: string; group_id: string; ordem?: number }
+        Update: { produto_id?: string; group_id?: string; ordem?: number }
+        Relationships: []
+      }
+      order_item_options: {
+        Row: { id: string; item_pedido_id: string; option_id: string | null; nome_congelado: string; preco_congelado: number; created_at: string }
+        Insert: { id?: string; item_pedido_id: string; option_id?: string | null; nome_congelado: string; preco_congelado?: number; created_at?: string }
+        Update: { id?: string; item_pedido_id?: string; option_id?: string | null; nome_congelado?: string; preco_congelado?: number; created_at?: string }
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {
