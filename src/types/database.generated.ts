@@ -289,6 +289,60 @@ export type Database = {
         }
         Relationships: []
       }
+      measurement_units: {
+        Row: { id: string; sigla: string; nome: string }
+        Insert: { id?: string; sigla: string; nome: string }
+        Update: { id?: string; sigla?: string; nome?: string }
+        Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          id: string; unit_id: string | null; measure_id: string | null; nome: string; categoria: string | null
+          estoque_minimo: number; custo_atual: number; ativo: boolean; created_at: string
+        }
+        Insert: {
+          id?: string; unit_id?: string | null; measure_id?: string | null; nome: string; categoria?: string | null
+          estoque_minimo?: number; custo_atual?: number; ativo?: boolean; created_at?: string
+        }
+        Update: {
+          id?: string; unit_id?: string | null; measure_id?: string | null; nome?: string; categoria?: string | null
+          estoque_minimo?: number; custo_atual?: number; ativo?: boolean; created_at?: string
+        }
+        Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          id: string; item_id: string; tipo: string; quantidade: number; custo_unitario: number | null
+          motivo: string | null; count_id: string | null; created_by: string | null; created_at: string
+        }
+        Insert: {
+          id?: string; item_id: string; tipo: string; quantidade: number; custo_unitario?: number | null
+          motivo?: string | null; count_id?: string | null; created_by?: string | null; created_at?: string
+        }
+        Update: {
+          id?: string; item_id?: string; tipo?: string; quantidade?: number; custo_unitario?: number | null
+          motivo?: string | null; count_id?: string | null; created_by?: string | null; created_at?: string
+        }
+        Relationships: []
+      }
+      stock_counts: {
+        Row: { id: string; unit_id: string | null; status: string; observacao: string | null; created_by: string | null; created_at: string; fechada_em: string | null }
+        Insert: { id?: string; unit_id?: string | null; status?: string; observacao?: string | null; created_by?: string | null; created_at?: string; fechada_em?: string | null }
+        Update: { id?: string; unit_id?: string | null; status?: string; observacao?: string | null; created_by?: string | null; created_at?: string; fechada_em?: string | null }
+        Relationships: []
+      }
+      stock_count_items: {
+        Row: { id: string; count_id: string; item_id: string; qtd_sistema: number; qtd_contada: number | null; diferenca: number | null }
+        Insert: { id?: string; count_id: string; item_id: string; qtd_sistema?: number; qtd_contada?: number | null; diferenca?: number | null }
+        Update: { id?: string; count_id?: string; item_id?: string; qtd_sistema?: number; qtd_contada?: number | null; diferenca?: number | null }
+        Relationships: []
+      }
+      v_inventory_balance: {
+        Row: { item_id: string; saldo: number }
+        Insert: { item_id?: string; saldo?: number }
+        Update: { item_id?: string; saldo?: number }
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {
