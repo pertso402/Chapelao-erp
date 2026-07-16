@@ -22,7 +22,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/estoque",      label: "Estoque",         icon: "📦", permission: "inventory.manage" },
   { href: "/compras",      label: "Compras",         icon: "🚚", permission: "purchasing.manage" },
   { href: "/financeiro",   label: "Financeiro",      icon: "💰", permission: "finance.view" },
-  { href: "/relatorios",   label: "Relatórios",      icon: "📈", permission: "reports.view", demo: true },
+  { href: "/relatorios",   label: "Relatórios (DRE)", icon: "📈", permission: "reports.view" },
   { href: "/configuracoes",label: "Configurações",   icon: "⚙️", permission: "settings.manage", demo: true },
 ];
 
