@@ -403,6 +403,18 @@ export type Database = {
         Update: { id?: string; nome?: string; ativo?: boolean }
         Relationships: []
       }
+      cash_sessions: {
+        Row: { id: string; unit_id: string | null; operador_id: string | null; status: string; saldo_inicial: number; aberta_em: string; fechada_em: string | null; fechamento: Json | null; observacao: string | null; created_at: string }
+        Insert: { id?: string; unit_id?: string | null; operador_id?: string | null; status?: string; saldo_inicial?: number; aberta_em?: string; fechada_em?: string | null; fechamento?: Json | null; observacao?: string | null; created_at?: string }
+        Update: { id?: string; unit_id?: string | null; operador_id?: string | null; status?: string; saldo_inicial?: number; aberta_em?: string; fechada_em?: string | null; fechamento?: Json | null; observacao?: string | null; created_at?: string }
+        Relationships: []
+      }
+      cash_movements: {
+        Row: { id: string; session_id: string; tipo: string; valor: number; motivo: string | null; created_by: string | null; created_at: string }
+        Insert: { id?: string; session_id: string; tipo: string; valor: number; motivo?: string | null; created_by?: string | null; created_at?: string }
+        Update: { id?: string; session_id?: string; tipo?: string; valor?: number; motivo?: string | null; created_by?: string | null; created_at?: string }
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {
