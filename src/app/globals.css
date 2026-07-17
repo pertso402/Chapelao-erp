@@ -37,6 +37,27 @@ body {
   font-family: var(--font-montserrat), system-ui, sans-serif;
 }
 
+/* Comanda térmica: escondida na tela, só aparece na impressão (window.print()) */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .comanda-print,
+  .comanda-print * {
+    visibility: visible;
+  }
+  .comanda-print {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    padding: 8px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    width: 80mm;
+  }
+}
+
 /* Faixa decorativa inspirada na barra do sombrero */
 .chap-stripe {
   height: 6px;

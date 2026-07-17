@@ -15,6 +15,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/pedidos",      label: "Pedidos",         icon: "🧾", permission: "orders.view" },
   { href: "/pdv",          label: "PDV / Balcão",    icon: "🛒", permission: "pdv.use" },
   { href: "/cozinha",      label: "Cozinha",         icon: "🍲", permission: "kitchen.view" },
+  { href: "/porcionamento", label: "Porcionamento",  icon: "🍱", permission: "porcionamento.operar" },
+  { href: "/porcionamento/configurar", label: "Config. Porções", icon: "⚖️", permission: "porcionamento.configurar" },
   { href: "/caixa",        label: "Caixa",           icon: "💵", permission: "pdv.use" },
   { href: "/clientes",     label: "Clientes",        icon: "👥", permission: "customers.manage" },
   { href: "/cardapio",     label: "Cardápio",        icon: "📋", permission: "catalog.manage" },
