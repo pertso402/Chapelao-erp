@@ -37,16 +37,29 @@ export type ProdutoComOpcoes = {
   id: string;
   nome: string;
   categoria: string | null;
+  descricao: string | null;
   preco: number;
+  preco_base: number;
+  preco_promocional: number | null;
+  disponivel: boolean;
+  destaque: boolean;
   grupos: GrupoOpcao[];
 };
 
 // Cardápio completo com os grupos de opções de cada produto (para montagem guiada).
-export async function listarCardapioComOpcoes(): Promise<ProdutoComOpcoes[]> {
+// `incluirIndisponiveis` traz também produtos desativados (uso administrativo, /cardapio).
+export async function listarCardapioComOpcoes(incluirIndisponiveis = false): Promise<ProdutoComOpcoes[]> {
   const supabase = await createClient();
 
+  let query = supabase
+    .from("produtos")
+    .select("id, nome, categoria, descricao, preco, preco_promocional, disponivel, destaque")
+    .order("categoria")
+    .order("nome");
+  if (!incluirIndisponiveis) query = query.eq("disponivel", true);
+
   const [{ data: produtos }, { data: pog }, { data: grupos }, { data: opcoes }] = await Promise.all([
-    supabase.from("produtos").select("id, nome, categoria, preco, preco_promocional").eq("disponivel", true).order("categoria").order("nome"),
+    query,
     supabase.from("product_option_groups").select("produto_id, group_id, ordem"),
     supabase.from("option_groups").select("id, nome, min_escolhas, max_escolhas"),
     supabase.from("options").select("id, group_id, nome, preco_adicional, disponivel, ordem").order("ordem"),
@@ -77,7 +90,12 @@ export async function listarCardapioComOpcoes(): Promise<ProdutoComOpcoes[]> {
     id: p.id,
     nome: p.nome,
     categoria: p.categoria,
+    descricao: p.descricao,
     preco: precoFinal(p),
+    preco_base: Number(p.preco),
+    preco_promocional: p.preco_promocional != null ? Number(p.preco_promocional) : null,
+    disponivel: p.disponivel ?? true,
+    destaque: p.destaque ?? false,
     grupos: gruposByProduto.get(p.id) ?? [],
   }));
 }

@@ -6,7 +6,12 @@ import { createClient } from "@/lib/supabase/client";
 export function LogoutButton() {
   const router = useRouter();
   async function sair() {
-    await createClient().auth.signOut();
+    try {
+      await createClient().auth.signOut();
+    } catch {
+      // Mesmo se a chamada de revogação falhar (rede instável), o storage
+      // local já foi limpo pelo supabase-js — segue pro login de qualquer jeito.
+    }
     router.push("/login");
     router.refresh();
   }

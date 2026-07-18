@@ -13,6 +13,7 @@ import {
   type StatusCanonico,
 } from "@/lib/orders/status";
 import { mudarStatusPedido, cancelarPedido } from "@/lib/orders/actions";
+import { PedidoPrintButton } from "@/components/orders/PedidoPrintButton";
 
 const brl = (v: number | null) =>
   Number(v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -111,6 +112,10 @@ export function PedidosBoard({
                   {p.forma_pagamento ? ` · ${p.forma_pagamento}` : ""}
                 </span>
                 <span className="font-extrabold text-verde">{brl(p.total)}</span>
+              </div>
+
+              <div className="mt-2 flex justify-end print:hidden">
+                <PedidoPrintButton pedido={p} />
               </div>
 
               {podeGerenciar && (

@@ -3,6 +3,8 @@ import { requirePermission } from "@/lib/auth/session";
 import { listarCardapioComOpcoes } from "@/lib/catalog/queries";
 import { custoPorProduto } from "@/lib/recipes/queries";
 import { PageHeader } from "@/components/PageHeader";
+import { ProdutoFormModal } from "@/components/catalog/ProdutoFormModal";
+import { ProdutoDeleteButton } from "@/components/catalog/ProdutoDeleteButton";
 
 export const dynamic = "force-dynamic";
 
@@ -19,17 +21,20 @@ function regraGrupo(min: number, max: number | null): string {
 
 export default async function CardapioPage() {
   await requirePermission("catalog.manage");
-  const [produtos, custos] = await Promise.all([listarCardapioComOpcoes(), custoPorProduto()]);
+  const [produtos, custos] = await Promise.all([listarCardapioComOpcoes(true), custoPorProduto()]);
 
   const porCategoria: Record<string, typeof produtos> = {};
   for (const p of produtos) (porCategoria[p.categoria || "Outros"] ||= []).push(p);
 
   return (
     <div>
-      <PageHeader
-        title="Cardápio"
-        subtitle="Produtos e a composição das marmitas (mistura, acompanhamentos e adicionais)."
-      />
+      <div className="flex items-start justify-between gap-3">
+        <PageHeader
+          title="Cardápio"
+          subtitle="Produtos e a composição das marmitas (mistura, acompanhamentos e adicionais)."
+        />
+        <ProdutoFormModal />
+      </div>
 
       <div className="space-y-6">
         {Object.entries(porCategoria).map(([cat, itens]) => (
@@ -37,10 +42,28 @@ export default async function CardapioPage() {
             <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-rojo">{cat}</h2>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {itens.map((p) => (
-                <article key={p.id} className="rounded-2xl border border-border bg-card p-4">
-                  <div className="flex items-baseline justify-between">
-                    <h3 className="font-bold text-marino">{p.nome}</h3>
-                    <span className="font-extrabold text-verde">{brl(p.preco)}</span>
+                <article key={p.id} className={`rounded-2xl border border-border bg-card p-4 ${!p.disponivel ? "opacity-60" : ""}`}>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h3 className="font-bold text-marino">
+                      {p.nome}
+                      {p.destaque && <span className="ml-1.5 text-xs">⭐</span>}
+                      {!p.disponivel && (
+                        <span className="ml-1.5 rounded-full bg-marino/10 px-2 py-0.5 text-[10px] font-bold text-marino">indisponível</span>
+                      )}
+                    </h3>
+                    <span className="shrink-0 font-extrabold text-verde">{brl(p.preco)}</span>
+                  </div>
+                  {p.descricao && <p className="mt-0.5 text-xs text-muted">{p.descricao}</p>}
+
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <ProdutoFormModal
+                      produto={{
+                        id: p.id, nome: p.nome, categoria: p.categoria, descricao: p.descricao,
+                        preco_base: p.preco_base, preco_promocional: p.preco_promocional,
+                        disponivel: p.disponivel, destaque: p.destaque,
+                      }}
+                    />
+                    <ProdutoDeleteButton id={p.id} disponivel={p.disponivel} />
                   </div>
 
                   {(() => {
