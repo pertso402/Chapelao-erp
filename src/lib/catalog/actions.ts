@@ -10,6 +10,7 @@ export type ProdutoInput = {
   descricao?: string;
   preco: number;
   preco_promocional?: number | null;
+  preco_delivery?: number | null;
   disponivel?: boolean;
   destaque?: boolean;
 };
@@ -19,6 +20,9 @@ function validar(input: ProdutoInput): string | null {
   if (!(Number(input.preco) > 0)) return "Preço deve ser maior que zero.";
   if (input.preco_promocional != null && Number(input.preco_promocional) >= Number(input.preco)) {
     return "Preço promocional deve ser menor que o preço normal.";
+  }
+  if (input.preco_delivery != null && !(Number(input.preco_delivery) > 0)) {
+    return "Preço de delivery deve ser maior que zero.";
   }
   return null;
 }
@@ -37,6 +41,7 @@ export async function criarProduto(input: ProdutoInput) {
       descricao: input.descricao?.trim() || null,
       preco: Number(input.preco),
       preco_promocional: input.preco_promocional != null ? Number(input.preco_promocional) : null,
+      preco_delivery: input.preco_delivery != null ? Number(input.preco_delivery) : null,
       disponivel: input.disponivel ?? true,
       destaque: input.destaque ?? false,
     })
@@ -62,6 +67,7 @@ export async function atualizarProduto(id: string, input: ProdutoInput) {
       descricao: input.descricao?.trim() || null,
       preco: Number(input.preco),
       preco_promocional: input.preco_promocional != null ? Number(input.preco_promocional) : null,
+      preco_delivery: input.preco_delivery != null ? Number(input.preco_delivery) : null,
       disponivel: input.disponivel ?? true,
       destaque: input.destaque ?? false,
     })

@@ -11,6 +11,7 @@ type ProdutoEditavel = {
   descricao: string | null;
   preco_base: number;
   preco_promocional: number | null;
+  preco_delivery: number | null;
   disponivel: boolean;
   destaque: boolean;
 };
@@ -26,6 +27,7 @@ export function ProdutoFormModal({ produto }: { produto?: ProdutoEditavel }) {
     descricao: produto?.descricao ?? "",
     preco: produto ? String(produto.preco_base) : "",
     preco_promocional: produto?.preco_promocional != null ? String(produto.preco_promocional) : "",
+    preco_delivery: produto?.preco_delivery != null ? String(produto.preco_delivery) : "",
     disponivel: produto?.disponivel ?? true,
     destaque: produto?.destaque ?? false,
   });
@@ -40,6 +42,7 @@ export function ProdutoFormModal({ produto }: { produto?: ProdutoEditavel }) {
       descricao: f.descricao,
       preco: Number(f.preco),
       preco_promocional: f.preco_promocional.trim() === "" ? null : Number(f.preco_promocional),
+      preco_delivery: f.preco_delivery.trim() === "" ? null : Number(f.preco_delivery),
       disponivel: f.disponivel,
       destaque: f.destaque,
     };
@@ -73,13 +76,16 @@ export function ProdutoFormModal({ produto }: { produto?: ProdutoEditavel }) {
               <input className={input} placeholder="Categoria" value={f.categoria} onChange={(e) => upd("categoria", e.target.value)} />
               <textarea className={input} placeholder="Descrição" rows={2} value={f.descricao} onChange={(e) => upd("descricao", e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
-                <label className="text-xs text-muted">Preço *
+                <label className="text-xs text-muted">Preço balcão *
                   <input className={input} type="number" step="0.01" value={f.preco} onChange={(e) => upd("preco", e.target.value)} />
                 </label>
                 <label className="text-xs text-muted">Preço promocional
                   <input className={input} type="number" step="0.01" value={f.preco_promocional} onChange={(e) => upd("preco_promocional", e.target.value)} />
                 </label>
               </div>
+              <label className="block text-xs text-muted">Preço delivery/WhatsApp <span className="text-muted/70">(vazio = usa o de balcão)</span>
+                <input className={input} type="number" step="0.01" value={f.preco_delivery} onChange={(e) => upd("preco_delivery", e.target.value)} />
+              </label>
               <div className="flex gap-4 pt-1">
                 <label className="flex items-center gap-1.5 text-sm text-marino">
                   <input type="checkbox" checked={f.disponivel} onChange={(e) => upd("disponivel", e.target.checked)} className="h-4 w-4 accent-[var(--chap-verde)]" />

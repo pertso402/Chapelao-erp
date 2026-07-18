@@ -1631,6 +1631,7 @@ export type Database = {
           imagem_url: string | null
           nome: string
           preco: number
+          preco_delivery: number | null
           preco_promocional: number | null
           video_url: string | null
         }
@@ -1644,6 +1645,7 @@ export type Database = {
           imagem_url?: string | null
           nome: string
           preco: number
+          preco_delivery?: number | null
           preco_promocional?: number | null
           video_url?: string | null
         }
@@ -1657,6 +1659,7 @@ export type Database = {
           imagem_url?: string | null
           nome?: string
           preco?: number
+          preco_delivery?: number | null
           preco_promocional?: number | null
           video_url?: string | null
         }

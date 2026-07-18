@@ -41,6 +41,7 @@ export type ProdutoComOpcoes = {
   preco: number;
   preco_base: number;
   preco_promocional: number | null;
+  preco_delivery: number | null;
   disponivel: boolean;
   destaque: boolean;
   grupos: GrupoOpcao[];
@@ -53,7 +54,7 @@ export async function listarCardapioComOpcoes(incluirIndisponiveis = false): Pro
 
   let query = supabase
     .from("produtos")
-    .select("id, nome, categoria, descricao, preco, preco_promocional, disponivel, destaque")
+    .select("id, nome, categoria, descricao, preco, preco_promocional, preco_delivery, disponivel, destaque")
     .order("categoria")
     .order("nome");
   if (!incluirIndisponiveis) query = query.eq("disponivel", true);
@@ -94,6 +95,7 @@ export async function listarCardapioComOpcoes(incluirIndisponiveis = false): Pro
     preco: precoFinal(p),
     preco_base: Number(p.preco),
     preco_promocional: p.preco_promocional != null ? Number(p.preco_promocional) : null,
+    preco_delivery: p.preco_delivery != null ? Number(p.preco_delivery) : null,
     disponivel: p.disponivel ?? true,
     destaque: p.destaque ?? false,
     grupos: gruposByProduto.get(p.id) ?? [],

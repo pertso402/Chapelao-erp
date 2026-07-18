@@ -54,12 +54,16 @@ export default async function CardapioPage() {
                     <span className="shrink-0 font-extrabold text-verde">{brl(p.preco)}</span>
                   </div>
                   {p.descricao && <p className="mt-0.5 text-xs text-muted">{p.descricao}</p>}
+                  {p.preco_delivery != null && (
+                    <p className="mt-0.5 text-xs text-muted">🛵 delivery: <span className="font-semibold text-marino">{brl(p.preco_delivery)}</span></p>
+                  )}
 
                   <div className="mt-2 flex items-center justify-between gap-2">
                     <ProdutoFormModal
                       produto={{
                         id: p.id, nome: p.nome, categoria: p.categoria, descricao: p.descricao,
                         preco_base: p.preco_base, preco_promocional: p.preco_promocional,
+                        preco_delivery: p.preco_delivery,
                         disponivel: p.disponivel, destaque: p.destaque,
                       }}
                     />
