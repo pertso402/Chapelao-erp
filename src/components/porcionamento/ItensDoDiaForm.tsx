@@ -11,6 +11,12 @@ const CATEGORIA_LABEL: Record<string, string> = {
   acompanhamento: "Acompanhamentos",
 };
 
+function mesmoConjunto(a: Set<string>, b: Set<string>) {
+  if (a.size !== b.size) return false;
+  for (const v of a) if (!b.has(v)) return false;
+  return true;
+}
+
 export function ItensDoDiaForm({
   catalogo,
   ativosIniciais,
@@ -24,8 +30,14 @@ export function ItensDoDiaForm({
 }) {
   const router = useRouter();
   const [ativos, setAtivos] = useState(new Set(ativosIniciais));
+  // O que está confirmado como salvo pra HOJE. Se veio do fallback (ontem),
+  // ainda não é um salvo de hoje de verdade — só um ponto de partida.
+  const [salvo, setSalvo] = useState(new Set(ativosIniciais));
+  const [salvoHoje, setSalvoHoje] = useState(!isFallback);
   const [pending, startTransition] = useTransition();
-  const [msg, setMsg] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const semAlteracoes = salvoHoje && mesmoConjunto(ativos, salvo);
 
   const grupos = new Map<string, ItemCatalogo[]>();
   for (const item of catalogo) {
@@ -51,18 +63,19 @@ export function ItensDoDiaForm({
   }
 
   function salvar() {
-    setMsg(null);
+    setErro(null);
     startTransition(async () => {
       const r = await salvarItensDoDia([...ativos]);
-      if (!r.ok) return setMsg(`Erro: ${r.erro}`);
-      setMsg("Itens de hoje salvos ✓");
+      if (!r.ok) return setErro(r.erro);
+      setSalvo(new Set(ativos));
+      setSalvoHoje(true);
       router.refresh();
     });
   }
 
   return (
     <div className="space-y-4 pb-24">
-      {isFallback && (
+      {isFallback && !salvoHoje && (
         <div className="rounded-xl bg-amarillo/20 px-4 py-3 text-sm text-marino">
           Hoje ainda não foi configurado — mostrando os itens de <strong>{new Date(dataFallback + "T00:00:00").toLocaleDateString("pt-BR")}</strong>. Confira e clique em salvar para confirmar hoje.
         </div>
@@ -101,13 +114,23 @@ export function ItensDoDiaForm({
 
       <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card p-4">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
-          {msg && <span className="flex-1 text-sm text-muted">{msg}</span>}
+          <span className={`flex-1 text-sm font-medium ${erro ? "text-rojo" : semAlteracoes ? "text-verde" : "text-rojo"}`}>
+            {erro
+              ? erro
+              : semAlteracoes
+                ? "✓ Itens de hoje salvos — nada pendente."
+                : "● Você tem alterações não salvas."}
+          </span>
           <button
             onClick={salvar}
-            disabled={pending}
-            className="ml-auto rounded-xl bg-rojo px-6 py-3 text-sm font-bold text-white transition hover:brightness-95 disabled:opacity-50"
+            disabled={pending || semAlteracoes}
+            className={`ml-auto shrink-0 rounded-xl px-6 py-3 text-sm font-bold transition disabled:cursor-default ${
+              semAlteracoes
+                ? "bg-verde/15 text-verde disabled:opacity-100"
+                : "bg-rojo text-white hover:brightness-95 disabled:opacity-50"
+            }`}
           >
-            {pending ? "Salvando…" : "Salvar itens de hoje"}
+            {pending ? "Salvando…" : semAlteracoes ? "✓ Tudo salvo" : "Salvar itens de hoje"}
           </button>
         </div>
       </div>
