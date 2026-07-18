@@ -1,19 +1,20 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export function LogoutButton() {
-  const router = useRouter();
   async function sair() {
     try {
       await createClient().auth.signOut();
     } catch {
-      // Mesmo se a chamada de revogação falhar (rede instável), o storage
-      // local já foi limpo pelo supabase-js — segue pro login de qualquer jeito.
+      // Mesmo se a chamada de revogação falhar (rede instável), segue pro
+      // login de qualquer jeito.
     }
-    router.push("/login");
-    router.refresh();
+    // Navegação forçada (não router.push): garante uma recarga completa da
+    // página, descartando qualquer estado/cliente Supabase em memória da
+    // aba antiga. Sem isso, a mesma instância do cliente pode persistir
+    // entre trocas de usuário na mesma aba e confundir o próximo login.
+    window.location.href = "/login";
   }
   return (
     <button

@@ -1,13 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { landingRoute } from "./actions";
 import { BrandMark } from "@/components/BrandMark";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [erro, setErro] = useState<string | null>(null);
@@ -22,14 +19,16 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setErro("E-mail ou senha inválidos.");
+        setCarregando(false);
         return;
       }
-      const destino = await landingRoute();
-      router.push(destino);
-      router.refresh();
+      // Navegação forçada (não router.push): garante que o servidor releia
+      // os cookies recém-gravados sem depender de uma server action logo em
+      // seguida ao login (fonte de uma falha intermitente). "/" já resolve
+      // pro dashboard ou pra primeira rota permitida do papel do usuário.
+      window.location.href = "/";
     } catch {
       setErro("Não foi possível conectar ao servidor. Tente novamente.");
-    } finally {
       setCarregando(false);
     }
   }
