@@ -2309,7 +2309,14 @@ export type Database = {
     }
     Functions: {
       current_user_role_slugs: { Args: never; Returns: string[] }
+      email_por_nome_login: { Args: { p_nome: string }; Returns: string }
       is_gestor: { Args: never; Returns: boolean }
+      listar_colaboradores_login: {
+        Args: never
+        Returns: {
+          nome: string
+        }[]
+      }
       user_has_permission: { Args: { perm: string }; Returns: boolean }
     }
     Enums: {

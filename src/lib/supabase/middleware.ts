@@ -30,25 +30,16 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const demo = process.env.DEMO_MODE === "true";
   const isPublic =
     path.startsWith("/login") ||
     path.startsWith("/api/health") ||
-    path.startsWith("/api/demo-login") ||
     path.startsWith("/_next") ||
     path === "/";
 
-  // Sem sessão em rota protegida → auto-login (demo) ou tela de login.
+  // Sem sessão em rota protegida → tela de login.
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
-    url.pathname = demo ? "/api/demo-login" : "/login";
-    return NextResponse.redirect(url);
-  }
-
-  // Em demo, quem cair na tela de login é encaminhado ao auto-login.
-  if (!user && demo && path.startsWith("/login")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/api/demo-login";
+    url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
