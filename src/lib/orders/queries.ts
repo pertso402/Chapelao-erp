@@ -14,6 +14,7 @@ export type PedidoLista = {
   desconto: number | null;
   total: number | null;
   observacao: string | null;
+  estoque_baixado: boolean;
   created_at: string | null;
   cliente: { nome: string | null; telefone: string | null } | null;
   itens: { nome_produto: string; quantidade: number; preco_unitario: number; total: number }[];
@@ -29,7 +30,7 @@ export async function listarPedidos(): Promise<PedidoLista[]> {
     .from("pedidos")
     .select(
       `id, numero_pedido, status, canal, tipo_entrega, endereco_entrega, forma_pagamento,
-       troco_para, subtotal, taxa_entrega, desconto, total, observacao, created_at,
+       troco_para, subtotal, taxa_entrega, desconto, total, observacao, estoque_baixado, created_at,
        clientes ( nome, telefone ),
        itens_pedido ( nome_produto, quantidade, preco_unitario, total )`,
     )
@@ -44,7 +45,7 @@ export async function listarPedidos(): Promise<PedidoLista[]> {
     tipo_entrega: string | null; endereco_entrega: string | null;
     forma_pagamento: string | null; troco_para: number | null;
     subtotal: number | null; taxa_entrega: number | null; desconto: number | null;
-    total: number | null; observacao: string | null;
+    total: number | null; observacao: string | null; estoque_baixado: boolean;
     created_at: string | null;
     clientes: { nome: string | null; telefone: string | null } | null;
     itens_pedido: { nome_produto: string; quantidade: number; preco_unitario: number; total: number }[] | null;
@@ -64,6 +65,7 @@ export async function listarPedidos(): Promise<PedidoLista[]> {
     desconto: r.desconto,
     total: r.total,
     observacao: r.observacao,
+    estoque_baixado: r.estoque_baixado,
     created_at: r.created_at,
     cliente: r.clientes,
     itens: r.itens_pedido ?? [],

@@ -1475,6 +1475,7 @@ export type Database = {
           cupom_id: string | null
           desconto: number | null
           endereco_entrega: string | null
+          estoque_baixado: boolean
           forma_pagamento: string | null
           id: string
           numero_pedido: number
@@ -1497,6 +1498,7 @@ export type Database = {
           cupom_id?: string | null
           desconto?: number | null
           endereco_entrega?: string | null
+          estoque_baixado?: boolean
           forma_pagamento?: string | null
           id?: string
           numero_pedido?: number
@@ -1519,6 +1521,7 @@ export type Database = {
           cupom_id?: string | null
           desconto?: number | null
           endereco_entrega?: string | null
+          estoque_baixado?: boolean
           forma_pagamento?: string | null
           id?: string
           numero_pedido?: number
@@ -2311,6 +2314,7 @@ export type Database = {
       }
     }
     Functions: {
+      baixar_estoque_pedido: { Args: { p_pedido_id: string; p_user?: string }; Returns: Json }
       current_user_role_slugs: { Args: never; Returns: string[] }
       email_por_nome_login: { Args: { p_nome: string }; Returns: string }
       is_gestor: { Args: never; Returns: boolean }

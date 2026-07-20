@@ -14,6 +14,7 @@ import {
 } from "@/lib/orders/status";
 import { mudarStatusPedido, cancelarPedido } from "@/lib/orders/actions";
 import { PedidoPrintButton } from "@/components/orders/PedidoPrintButton";
+import { BaixaEstoqueButton } from "@/components/orders/BaixaEstoqueButton";
 
 const brl = (v: number | null) =>
   Number(v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -114,7 +115,10 @@ export function PedidosBoard({
                 <span className="font-extrabold text-verde">{brl(p.total)}</span>
               </div>
 
-              <div className="mt-2 flex justify-end print:hidden">
+              <div className="mt-2 flex items-center justify-end gap-2 print:hidden">
+                {podeGerenciar && normalizarStatus(p.status) !== "cancelado" && (
+                  <BaixaEstoqueButton pedidoId={p.id} jaBaixado={p.estoque_baixado} />
+                )}
                 <PedidoPrintButton pedido={p} />
               </div>
 
