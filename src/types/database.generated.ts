@@ -2312,6 +2312,18 @@ export type Database = {
           },
         ]
       }
+      comandas: {
+        Row: { id: string; unit_id: string | null; numero_mesa: number; status: string; aberta_por: string | null; aberta_em: string; fechada_em: string | null; pedido_id: string | null; observacao: string | null }
+        Insert: { id?: string; unit_id?: string | null; numero_mesa: number; status?: string; aberta_por?: string | null; aberta_em?: string; fechada_em?: string | null; pedido_id?: string | null; observacao?: string | null }
+        Update: { id?: string; unit_id?: string | null; numero_mesa?: number; status?: string; aberta_por?: string | null; aberta_em?: string; fechada_em?: string | null; pedido_id?: string | null; observacao?: string | null }
+        Relationships: []
+      }
+      comanda_itens: {
+        Row: { id: string; comanda_id: string; produto_id: string | null; nome_produto: string; quantidade: number; preco_unitario: number; total: number; composicao: string | null; opcoes: Json | null; created_by: string | null; created_at: string }
+        Insert: { id?: string; comanda_id: string; produto_id?: string | null; nome_produto: string; quantidade?: number; preco_unitario?: number; total?: number; composicao?: string | null; opcoes?: Json | null; created_by?: string | null; created_at?: string }
+        Update: { id?: string; comanda_id?: string; produto_id?: string | null; nome_produto?: string; quantidade?: number; preco_unitario?: number; total?: number; composicao?: string | null; opcoes?: Json | null; created_by?: string | null; created_at?: string }
+        Relationships: []
+      }
     }
     Functions: {
       baixar_estoque_pedido: { Args: { p_pedido_id: string; p_user?: string }; Returns: Json }

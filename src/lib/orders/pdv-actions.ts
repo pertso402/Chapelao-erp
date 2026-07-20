@@ -52,6 +52,7 @@ export async function criarPedidoBalcao(input: {
   company_id?: string | null;
   company_employee_id?: string | null;
   percentual_desconto?: number;
+  comanda_id?: string | null;
 }) {
   const user = await requirePermission("pdv.use");
   const supabase = await createClient();
@@ -170,6 +171,15 @@ export async function criarPedidoBalcao(input: {
     valores_posteriores: { total, itens: itens.length, canal: "balcao" },
     origem: "erp",
   });
+
+  // Se veio de uma mesa, encerra a comanda vinculando ao pedido criado.
+  if (input.comanda_id) {
+    await supabase
+      .from("comandas")
+      .update({ status: "fechada", fechada_em: new Date().toISOString(), pedido_id: pedido.id })
+      .eq("id", input.comanda_id);
+    revalidatePath("/mesas");
+  }
 
   revalidatePath("/pedidos");
   return { ok: true as const, numeroPedido: pedido.numero_pedido, total };

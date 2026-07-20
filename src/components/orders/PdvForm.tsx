@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { ProdutoComOpcoes } from "@/lib/catalog/queries";
 import type { EmpresaPdv } from "@/lib/b2b/queries";
 import { buscarClientePorTelefone, criarPedidoBalcao } from "@/lib/orders/pdv-actions";
+import { buscarComandaPorMesa } from "@/lib/mesas/actions";
 import { MontagemModal } from "@/components/orders/MontagemModal";
 
 const brl = (v: number) =>
@@ -20,9 +21,11 @@ export type LinhaCarrinho = {
   composicao?: string;
 };
 
-export function PdvForm({ produtos, empresas = [] }: { produtos: ProdutoComOpcoes[]; empresas?: EmpresaPdv[] }) {
+export function PdvForm({ produtos, empresas = [], mesaInicial }: { produtos: ProdutoComOpcoes[]; empresas?: EmpresaPdv[]; mesaInicial?: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [mesa, setMesa] = useState(mesaInicial ?? "");
+  const [comandaId, setComandaId] = useState<string | null>(null);
 
   const [telefone, setTelefone] = useState("");
   const [nome, setNome] = useState("");
@@ -77,6 +80,37 @@ export function PdvForm({ produtos, empresas = [] }: { produtos: ProdutoComOpcoe
         .filter((l) => l.quantidade > 0),
     );
 
+  // Importa os itens da comanda de uma mesa para a comanda do PDV.
+  const importarMesa = useCallback((numero: string) => {
+    if (!numero.trim()) return;
+    startTransition(async () => {
+      const r = await buscarComandaPorMesa(Number(numero));
+      if (!r.ok) {
+        setMsg(r.erro);
+        setComandaId(null);
+        return;
+      }
+      setCarrinho(
+        r.itens.map((i) => ({
+          key: crypto.randomUUID(),
+          produto_id: i.produto_id,
+          nome: i.nome,
+          preco_unitario: i.preco_unitario,
+          quantidade: i.quantidade,
+          opcoes: i.opcoes,
+          composicao: i.composicao,
+        })),
+      );
+      setComandaId(r.comanda_id);
+      setMsg(`Mesa ${r.numero_mesa} carregada (${r.itens.length} itens).`);
+    });
+  }, []);
+
+  // Se veio de /pdv?mesa=N, já carrega a comanda.
+  useEffect(() => {
+    if (mesaInicial) importarMesa(mesaInicial);
+  }, [mesaInicial, importarMesa]);
+
   function buscarCliente() {
     if (!telefone.trim()) return;
     startTransition(async () => {
@@ -112,6 +146,7 @@ export function PdvForm({ produtos, empresas = [] }: { produtos: ProdutoComOpcoe
         company_id: empresaId || null,
         company_employee_id: funcionarioId || null,
         percentual_desconto: pctDesconto,
+        comanda_id: comandaId,
       });
       if (!r.ok) {
         setMsg(r.erro);
@@ -124,6 +159,8 @@ export function PdvForm({ produtos, empresas = [] }: { produtos: ProdutoComOpcoe
       setEndereco("");
       setEmpresaId("");
       setFuncionarioId("");
+      setMesa("");
+      setComandaId(null);
       router.refresh();
     });
   }
@@ -170,6 +207,31 @@ export function PdvForm({ produtos, empresas = [] }: { produtos: ProdutoComOpcoe
       {/* Comanda */}
       <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
         <h2 className="font-extrabold text-marino">Comanda</h2>
+
+        {/* Importar mesa */}
+        <div className={`rounded-lg p-2 ${comandaId ? "bg-verde/10" : "bg-black/[0.03]"}`}>
+          <div className="mb-1 text-xs font-bold text-marino">
+            {comandaId ? `🍽️ Mesa ${mesa} carregada` : "🍽️ Fechar mesa"}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              inputMode="numeric"
+              value={mesa}
+              onChange={(e) => setMesa(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && importarMesa(mesa)}
+              placeholder="Nº da mesa"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-azul"
+            />
+            <button
+              onClick={() => importarMesa(mesa)}
+              disabled={pending || !mesa}
+              className="shrink-0 rounded-lg bg-marino px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              Carregar
+            </button>
+          </div>
+        </div>
 
         <div className="flex gap-2">
           <input
