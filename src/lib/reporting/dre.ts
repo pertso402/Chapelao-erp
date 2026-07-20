@@ -18,11 +18,11 @@ export type DRE = {
   naoClassificadas: number; // contas a pagar sem categoria (alerta)
 };
 
-export async function dreDoMes(): Promise<DRE> {
+export async function dreDoMes(inicioArg?: Date, fimExclArg?: Date): Promise<DRE> {
   const supabase = await createClient();
   const agora = new Date();
-  const inicio = new Date(agora.getFullYear(), agora.getMonth(), 1);
-  const fimExcl = new Date(agora.getFullYear(), agora.getMonth() + 1, 1);
+  const inicio = inicioArg ?? new Date(agora.getFullYear(), agora.getMonth(), 1);
+  const fimExcl = fimExclArg ?? new Date(agora.getFullYear(), agora.getMonth() + 1, 1);
 
   // Receita: pedidos do mês (não cancelados)
   const { data: pedidos } = await supabase

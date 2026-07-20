@@ -1,70 +1,133 @@
 import { requirePermission } from "@/lib/auth/session";
 import { dreDoMes } from "@/lib/reporting/dre";
+import { gerarRelatorio, TIPOS_RELATORIO } from "@/lib/reporting/reports";
 import { PageHeader } from "@/components/PageHeader";
+import { PrintButton } from "@/components/PrintButton";
 
 export const dynamic = "force-dynamic";
 
 const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmtBr = (iso: string) => new Date(iso + "T12:00:00").toLocaleDateString("pt-BR");
 
-export default async function RelatoriosPage() {
+function mesAtual() {
+  const a = new Date();
+  const ini = new Date(a.getFullYear(), a.getMonth(), 1);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  return { de: iso(ini), ate: iso(a) };
+}
+
+const OPCOES = [...TIPOS_RELATORIO, { valor: "dre", label: "DRE gerencial" }];
+
+export default async function RelatoriosPage({ searchParams }: { searchParams: Promise<{ tipo?: string; de?: string; ate?: string }> }) {
   await requirePermission("reports.view");
-  const dre = await dreDoMes();
+  const sp = await searchParams;
+  const def = mesAtual();
+  const tipo = sp.tipo ?? "vendas_dia";
+  const de = sp.de ?? def.de;
+  const ate = sp.ate ?? def.ate;
+
+  const inputCls = "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-azul";
 
   return (
     <div>
-      <PageHeader title="DRE gerencial" subtitle={`Demonstrativo de resultado por competência — ${dre.periodo}`} />
+      <PageHeader title="Relatórios" subtitle="Escolha o relatório e o período, depois imprima." />
 
-      {dre.naoClassificadas > 0 && (
-        <p className="mb-4 rounded-lg bg-amarillo/20 px-3 py-2 text-sm text-marino">
-          ⚠ {brl(dre.naoClassificadas)} em contas a pagar sem categoria — classifique no plano de contas para a DRE ficar completa.
-        </p>
-      )}
+      {/* Filtros (não imprime) */}
+      <form method="GET" className="no-print mb-5 flex flex-wrap items-end gap-2 rounded-2xl border border-border bg-card p-3">
+        <label className="text-xs text-muted">Relatório
+          <select name="tipo" defaultValue={tipo} className={inputCls + " mt-0.5 block w-56"}>
+            {OPCOES.map((o) => <option key={o.valor} value={o.valor}>{o.label}</option>)}
+          </select>
+        </label>
+        <label className="text-xs text-muted">De
+          <input type="date" name="de" defaultValue={de} className={inputCls + " mt-0.5 block"} />
+        </label>
+        <label className="text-xs text-muted">Até
+          <input type="date" name="ate" defaultValue={ate} className={inputCls + " mt-0.5 block"} />
+        </label>
+        <button type="submit" className="rounded-lg bg-rojo px-4 py-2 text-sm font-semibold text-white">Gerar</button>
+        <div className="ml-auto"><PrintButton /></div>
+      </form>
 
-      <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="chap-stripe" />
-        <table className="w-full text-sm">
-          <tbody>
-            <Linha label="Receita bruta" valor={dre.receitaBruta} />
-            <Linha label="(−) Descontos" valor={-dre.descontos} sub />
-            <Linha label="= Receita líquida" valor={dre.receitaLiquida} forte />
-            <Linha label="(−) CMV (teórico)" valor={-dre.cmv} sub />
-            <Linha label="= Margem bruta" valor={dre.margemBruta} forte extra={`${dre.margemBrutaPct.toFixed(1)}%`} corExtra="var(--chap-verde)" />
+      {/* Área imprimível */}
+      <div className="print-area rounded-2xl border border-border bg-card p-5">
+        <div className="mb-4 border-b border-border pb-3">
+          <div className="text-lg font-extrabold text-rojo">🎩 Restaurante Chapelão — 2ª Unidade</div>
+          <div className="text-xs text-muted">Período: {fmtBr(de)} a {fmtBr(ate)} · gerado em {new Date().toLocaleString("pt-BR")}</div>
+        </div>
 
-            <tr><td colSpan={2} className="px-4 pt-3 pb-1 text-xs font-bold uppercase tracking-wide text-muted">Despesas operacionais</td></tr>
-            {dre.despesas.length === 0 ? (
-              <tr><td className="px-4 py-1.5 text-muted" colSpan={2}>Sem despesas classificadas no período.</td></tr>
-            ) : (
-              dre.despesas.map((d) => <Linha key={d.categoria} label={d.categoria} valor={-d.valor} sub />)
-            )}
-            <Linha label="(=) Total de despesas" valor={-dre.totalDespesas} />
-
-            <tr className="border-t-2 border-marino">
-              <td className="px-4 py-3 text-base font-extrabold text-marino">Resultado gerencial</td>
-              <td className={`px-4 py-3 text-right text-base font-extrabold ${dre.resultado >= 0 ? "text-verde" : "text-rojo"}`}>
-                {brl(dre.resultado)}
-                <span className="ml-2 text-xs font-semibold text-muted">{dre.resultadoPct.toFixed(1)}%</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        {tipo === "dre" ? (
+          <DreView de={de} ate={ate} />
+        ) : (
+          <TabelaRelatorio tipo={tipo} de={de} ate={ate} />
+        )}
       </div>
-
-      <p className="mx-auto mt-3 max-w-2xl text-center text-xs text-muted">
-        Receita e CMV vêm das vendas e fichas técnicas do mês; despesas vêm das contas a pagar classificadas pelo plano de contas.
-      </p>
     </div>
   );
 }
 
-function Linha({ label, valor, sub = false, forte = false, extra, corExtra }: { label: string; valor: number; sub?: boolean; forte?: boolean; extra?: string; corExtra?: string }) {
-  const brlS = valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", signDisplay: valor < 0 ? "always" : "auto" });
+async function TabelaRelatorio({ tipo, de, ate }: { tipo: string; de: string; ate: string }) {
+  const rel = await gerarRelatorio(tipo, de, ate);
   return (
-    <tr className={forte ? "border-y border-border bg-black/[0.02]" : ""}>
-      <td className={`px-4 py-1.5 ${sub ? "pl-8 text-muted" : "font-medium text-marino"} ${forte ? "font-bold text-marino" : ""}`}>{label}</td>
-      <td className={`px-4 py-1.5 text-right ${valor < 0 ? "text-rojo" : "text-marino"} ${forte ? "font-extrabold" : ""}`}>
-        {brlS}
-        {extra && <span className="ml-2 text-xs font-semibold" style={{ color: corExtra }}>{extra}</span>}
-      </td>
+    <div>
+      <h2 className="mb-3 text-base font-bold text-marino">{rel.titulo}</h2>
+      {rel.linhas.length === 0 ? (
+        <p className="text-sm text-muted">Sem dados no período.</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-xs text-muted">
+              {rel.colunas.map((c) => <th key={c.key} className={`pb-1 ${c.align === "right" ? "text-right" : ""}`}>{c.label}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {rel.linhas.map((l, i) => (
+              <tr key={i} className="border-b border-border/60">
+                {rel.colunas.map((c) => <td key={c.key} className={`py-1.5 ${c.align === "right" ? "text-right" : ""} text-marino`}>{l[c.key]}</td>)}
+              </tr>
+            ))}
+          </tbody>
+          {rel.totais && (
+            <tfoot>
+              <tr className="border-t-2 border-marino font-bold text-marino">
+                {rel.colunas.map((c) => <td key={c.key} className={`pt-2 ${c.align === "right" ? "text-right" : ""}`}>{rel.totais![c.key]}</td>)}
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      )}
+    </div>
+  );
+}
+
+async function DreView({ de, ate }: { de: string; ate: string }) {
+  const ini = new Date(de + "T00:00:00");
+  const fimExcl = new Date(new Date(ate + "T00:00:00").getTime() + 864e5);
+  const dre = await dreDoMes(ini, fimExcl);
+  const linha = (label: string, valor: number, opts: { forte?: boolean; sub?: boolean } = {}) => (
+    <tr className={opts.forte ? "border-y border-border bg-black/[0.02] font-bold" : ""}>
+      <td className={`py-1.5 ${opts.sub ? "pl-6 text-muted" : "text-marino"}`}>{label}</td>
+      <td className={`py-1.5 text-right ${valor < 0 ? "text-rojo" : "text-marino"}`}>{valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", signDisplay: valor < 0 ? "always" : "auto" })}</td>
     </tr>
+  );
+  return (
+    <div>
+      <h2 className="mb-3 text-base font-bold text-marino">DRE gerencial</h2>
+      <table className="w-full max-w-xl text-sm">
+        <tbody>
+          {linha("Receita bruta", dre.receitaBruta)}
+          {linha("(−) Descontos", -dre.descontos, { sub: true })}
+          {linha("= Receita líquida", dre.receitaLiquida, { forte: true })}
+          {linha("(−) CMV (teórico)", -dre.cmv, { sub: true })}
+          {linha("= Margem bruta", dre.margemBruta, { forte: true })}
+          {dre.despesas.map((d) => linha(d.categoria, -d.valor, { sub: true }))}
+          {linha("(=) Total de despesas", -dre.totalDespesas)}
+          <tr className="border-t-2 border-marino text-base font-extrabold">
+            <td className="py-2 text-marino">Resultado gerencial</td>
+            <td className={`py-2 text-right ${dre.resultado >= 0 ? "text-verde" : "text-rojo"}`}>{brl(dre.resultado)} <span className="text-xs text-muted">{dre.resultadoPct.toFixed(1)}%</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -37,13 +37,18 @@ body {
   font-family: var(--font-montserrat), system-ui, sans-serif;
 }
 
-/* Comanda térmica: escondida na tela, só aparece na impressão (window.print()) */
+/* Impressão — dois alvos possíveis, nunca na mesma tela:
+   .comanda-print  → comanda térmica do pedido (80mm)
+   .print-area     → relatório da tela de Relatórios
+   Regra: esconde tudo e revela só o alvo presente na página. */
 @media print {
   body * {
     visibility: hidden;
   }
   .comanda-print,
-  .comanda-print * {
+  .comanda-print *,
+  .print-area,
+  .print-area * {
     visibility: visible;
   }
   .comanda-print {
@@ -55,6 +60,23 @@ body {
     font-family: "Courier New", monospace;
     font-size: 12px;
     width: 80mm;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  body {
+    background: #fff;
   }
 }
 
