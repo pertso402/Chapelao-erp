@@ -1754,6 +1754,8 @@ export type Database = {
       }
       purchases: {
         Row: {
+          anexo_nome: string | null
+          anexo_path: string | null
           confirmada_em: string | null
           created_at: string
           created_by: string | null
@@ -1765,6 +1767,8 @@ export type Database = {
           unit_id: string | null
         }
         Insert: {
+          anexo_nome?: string | null
+          anexo_path?: string | null
           confirmada_em?: string | null
           created_at?: string
           created_by?: string | null
@@ -1776,6 +1780,8 @@ export type Database = {
           unit_id?: string | null
         }
         Update: {
+          anexo_nome?: string | null
+          anexo_path?: string | null
           confirmada_em?: string | null
           created_at?: string
           created_by?: string | null

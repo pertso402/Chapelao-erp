@@ -39,6 +39,7 @@ export default async function ComprasPage() {
                   <th className="pb-1">Fornecedor</th>
                   <th className="pb-1 text-right">Itens</th>
                   <th className="pb-1 text-right">Total</th>
+                  <th className="pb-1"></th>
                 </tr>
               </thead>
               <tbody>
@@ -48,6 +49,13 @@ export default async function ComprasPage() {
                     <td className="py-1.5 text-marino">{c.fornecedor}</td>
                     <td className="py-1.5 text-right">{c.itens}</td>
                     <td className="py-1.5 text-right font-semibold text-marino">{brl(c.total)}</td>
+                    <td className="py-1.5 text-right">
+                      {c.anexoUrl && (
+                        <a href={c.anexoUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-azul hover:underline">
+                          📎 {c.anexoNome ?? "anexo"}
+                        </a>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

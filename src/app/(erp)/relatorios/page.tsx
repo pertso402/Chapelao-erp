@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requirePermission } from "@/lib/auth/session";
 import { dreDoMes } from "@/lib/reporting/dre";
 import { gerarRelatorio, TIPOS_RELATORIO } from "@/lib/reporting/reports";
@@ -30,7 +31,15 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: P
 
   return (
     <div>
-      <PageHeader title="Relatórios" subtitle="Escolha o relatório e o período, depois imprima." />
+      <div className="no-print flex items-start justify-between gap-3">
+        <PageHeader title="Relatórios" subtitle="Escolha o relatório e o período, depois imprima." />
+        <Link
+          href="/relatorios/fechamento"
+          className="shrink-0 rounded-lg border border-verde px-4 py-2 text-sm font-semibold text-verde transition hover:bg-verde/10"
+        >
+          🧾 Fechamento mensal p/ contador
+        </Link>
+      </div>
 
       {/* Filtros (não imprime) */}
       <form method="GET" className="no-print mb-5 flex flex-wrap items-end gap-2 rounded-2xl border border-border bg-card p-3">

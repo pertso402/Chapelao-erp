@@ -18,6 +18,8 @@ export async function confirmarCompra(input: {
   vencimento?: string | null;
   observacao?: string;
   itens: ItemCompra[];
+  anexo_path?: string | null;
+  anexo_nome?: string | null;
 }) {
   const user = await requirePermission("purchasing.manage");
   const supabase = await createClient();
@@ -41,6 +43,8 @@ export async function confirmarCompra(input: {
       observacao: input.observacao?.trim() || null,
       created_by: user.id,
       confirmada_em: new Date().toISOString(),
+      anexo_path: input.anexo_path ?? null,
+      anexo_nome: input.anexo_nome ?? null,
     })
     .select("id")
     .single();
