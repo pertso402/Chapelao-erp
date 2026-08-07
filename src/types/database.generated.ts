@@ -1632,6 +1632,7 @@ export type Database = {
           disponivel: boolean | null
           id: string
           imagem_url: string | null
+          inventory_item_id: string | null
           nome: string
           preco: number
           preco_delivery: number | null
@@ -1646,6 +1647,7 @@ export type Database = {
           disponivel?: boolean | null
           id?: string
           imagem_url?: string | null
+          inventory_item_id?: string | null
           nome: string
           preco: number
           preco_delivery?: number | null
@@ -1660,6 +1662,7 @@ export type Database = {
           disponivel?: boolean | null
           id?: string
           imagem_url?: string | null
+          inventory_item_id?: string | null
           nome?: string
           preco?: number
           preco_delivery?: number | null
@@ -2333,6 +2336,8 @@ export type Database = {
     }
     Functions: {
       baixar_estoque_pedido: { Args: { p_pedido_id: string; p_user?: string }; Returns: Json }
+      vincular_produto_estoque: { Args: { p_produto_id: string }; Returns: string }
+      vincular_produtos_sem_custo: { Args: never; Returns: number }
       current_user_role_slugs: { Args: never; Returns: string[] }
       email_por_nome_login: { Args: { p_nome: string }; Returns: string }
       is_gestor: { Args: never; Returns: boolean }

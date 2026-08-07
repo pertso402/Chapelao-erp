@@ -1,19 +1,45 @@
 import { createClient } from "@/lib/supabase/server";
 
-// Mapa produto_id → custo teórico por porção (só produtos com ficha ativa).
+// Mapa produto_id → custo. Duas fontes:
+// 1) Produtos PREPARADOS (têm ficha técnica): custo = soma dos ingredientes (v_recipe_cost).
+// 2) Produtos de REVENDA (vinculados 1:1 a um item de estoque): custo = custo_atual do item.
+// Retorna também se o custo é 0 "de verdade" (revenda sem compra registrada ainda).
 export async function custoPorProduto(): Promise<Map<string, number>> {
   const supabase = await createClient();
-  const [{ data: recipes }, { data: custos }] = await Promise.all([
+  const [{ data: recipes }, { data: custos }, { data: produtos }] = await Promise.all([
     supabase.from("recipes").select("id, produto_id"),
     supabase.from("v_recipe_cost").select("recipe_id, custo_porcao"),
+    supabase.from("produtos").select("id, inventory_item_id").not("inventory_item_id", "is", null),
   ]);
+
   const custoPorRecipe = new Map((custos ?? []).map((c) => [c.recipe_id, Number(c.custo_porcao)]));
   const m = new Map<string, number>();
   for (const r of recipes ?? []) {
     const c = custoPorRecipe.get(r.id);
     if (c != null) m.set(r.produto_id, c);
   }
+
+  const itemIds = [...new Set((produtos ?? []).map((p) => p.inventory_item_id).filter(Boolean))] as string[];
+  if (itemIds.length) {
+    const { data: itens } = await supabase.from("inventory_items").select("id, custo_atual").in("id", itemIds);
+    const custoPorItem = new Map((itens ?? []).map((i) => [i.id, Number(i.custo_atual)]));
+    for (const p of produtos ?? []) {
+      if (m.has(p.id)) continue; // ficha técnica tem prioridade
+      const c = p.inventory_item_id ? custoPorItem.get(p.inventory_item_id) : undefined;
+      if (c != null) m.set(p.id, c);
+    }
+  }
+
   return m;
+}
+
+// Produtos ainda sem NENHUM rastreamento de custo (nem ficha, nem vínculo de estoque).
+export async function contarProdutosSemCusto(): Promise<number> {
+  const supabase = await createClient();
+  const { data: produtos } = await supabase.from("produtos").select("id, inventory_item_id").eq("disponivel", true);
+  const { data: recipes } = await supabase.from("recipes").select("produto_id");
+  const comFicha = new Set((recipes ?? []).map((r) => r.produto_id));
+  return (produtos ?? []).filter((p) => !p.inventory_item_id && !comFicha.has(p.id)).length;
 }
 
 export type FichaItem = {

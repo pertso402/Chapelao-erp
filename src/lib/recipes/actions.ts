@@ -56,3 +56,16 @@ export async function removerIngrediente(recipeItemId: string, produtoId: string
   revalidatePath("/cardapio");
   return { ok: true as const };
 }
+
+// Vincula todos os produtos de revenda (sem ficha técnica) a um item de
+// estoque 1:1, criando o item quando necessário. Custo começa em R$0 e é
+// preenchido pela primeira compra registrada — nada é inventado.
+export async function vincularProdutosSemCusto() {
+  await requirePermission("catalog.manage");
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("vincular_produtos_sem_custo");
+  if (error) return { ok: false as const, erro: error.message };
+  revalidatePath("/cardapio");
+  revalidatePath("/estoque");
+  return { ok: true as const, vinculados: data ?? 0 };
+}

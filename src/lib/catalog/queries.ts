@@ -44,6 +44,7 @@ export type ProdutoComOpcoes = {
   preco_delivery: number | null;
   disponivel: boolean;
   destaque: boolean;
+  inventory_item_id: string | null;
   grupos: GrupoOpcao[];
 };
 
@@ -54,7 +55,7 @@ export async function listarCardapioComOpcoes(incluirIndisponiveis = false): Pro
 
   let query = supabase
     .from("produtos")
-    .select("id, nome, categoria, descricao, preco, preco_promocional, preco_delivery, disponivel, destaque")
+    .select("id, nome, categoria, descricao, preco, preco_promocional, preco_delivery, disponivel, destaque, inventory_item_id")
     .order("categoria")
     .order("nome");
   if (!incluirIndisponiveis) query = query.eq("disponivel", true);
@@ -98,6 +99,7 @@ export async function listarCardapioComOpcoes(incluirIndisponiveis = false): Pro
     preco_delivery: p.preco_delivery != null ? Number(p.preco_delivery) : null,
     disponivel: p.disponivel ?? true,
     destaque: p.destaque ?? false,
+    inventory_item_id: p.inventory_item_id ?? null,
     grupos: gruposByProduto.get(p.id) ?? [],
   }));
 }

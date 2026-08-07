@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth/session";
 import { listarCardapioComOpcoes } from "@/lib/catalog/queries";
-import { custoPorProduto } from "@/lib/recipes/queries";
+import { custoPorProduto, contarProdutosSemCusto } from "@/lib/recipes/queries";
 import { PageHeader } from "@/components/PageHeader";
 import { ProdutoFormModal } from "@/components/catalog/ProdutoFormModal";
 import { ProdutoDeleteButton } from "@/components/catalog/ProdutoDeleteButton";
+import { VincularEstoqueButton } from "@/components/catalog/VincularEstoqueButton";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,11 @@ function regraGrupo(min: number, max: number | null): string {
 
 export default async function CardapioPage() {
   await requirePermission("catalog.manage");
-  const [produtos, custos] = await Promise.all([listarCardapioComOpcoes(true), custoPorProduto()]);
+  const [produtos, custos, pendentes] = await Promise.all([
+    listarCardapioComOpcoes(true),
+    custoPorProduto(),
+    contarProdutosSemCusto(),
+  ]);
 
   const porCategoria: Record<string, typeof produtos> = {};
   for (const p of produtos) (porCategoria[p.categoria || "Outros"] ||= []).push(p);
@@ -35,6 +40,8 @@ export default async function CardapioPage() {
         />
         <ProdutoFormModal />
       </div>
+
+      <VincularEstoqueButton pendentes={pendentes} />
 
       <div className="space-y-6">
         {Object.entries(porCategoria).map(([cat, itens]) => (
@@ -72,21 +79,30 @@ export default async function CardapioPage() {
 
                   {(() => {
                     const custo = custos.get(p.id);
-                    const temFicha = custo != null;
-                    const margem = temFicha ? p.preco - custo! : 0;
-                    const margemPct = temFicha && p.preco > 0 ? (margem / p.preco) * 100 : 0;
+                    const temCustoReal = custo != null && custo > 0;
+                    const vinculadoSemCusto = custo === 0 && p.inventory_item_id != null;
+                    const semNada = custo == null && p.inventory_item_id == null;
+                    const margemPct = temCustoReal && p.preco > 0 ? ((p.preco - custo!) / p.preco) * 100 : 0;
                     return (
                       <div className="mt-1 flex items-center gap-2 text-xs">
-                        {temFicha ? (
+                        {temCustoReal ? (
                           <span className="text-muted">
                             custo {brl(custo!)} · margem <span className="font-bold text-verde">{margemPct.toFixed(0)}%</span>
                           </span>
+                        ) : vinculadoSemCusto ? (
+                          <span className="font-semibold text-amarillo">vinculado — aguardando 1ª compra p/ custo</span>
                         ) : (
-                          <span className="text-muted">sem ficha técnica</span>
+                          <span className="text-muted">{semNada ? "sem rastreamento de custo" : "sem custo"}</span>
                         )}
-                        <Link href={`/fichas/${p.id}`} className="ml-auto font-semibold text-azul hover:underline">
-                          {temFicha ? "ficha técnica" : "criar ficha"}
-                        </Link>
+                        {p.inventory_item_id ? (
+                          <Link href={`/estoque/${p.inventory_item_id}`} className="ml-auto font-semibold text-azul hover:underline">
+                            ver no estoque
+                          </Link>
+                        ) : (
+                          <Link href={`/fichas/${p.id}`} className="ml-auto font-semibold text-azul hover:underline">
+                            {custo != null ? "ficha técnica" : "criar ficha"}
+                          </Link>
+                        )}
                       </div>
                     );
                   })()}
