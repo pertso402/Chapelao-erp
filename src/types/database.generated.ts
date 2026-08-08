@@ -682,8 +682,11 @@ export type Database = {
           codigo: string
           created_at: string | null
           desconto_percentual: number
+          descricao: string | null
           id: string
+          itens_permitidos: string[] | null
           pedido_id: string | null
+          tipo: string
           usado: boolean | null
           valido_ate: string
         }
@@ -692,8 +695,11 @@ export type Database = {
           codigo: string
           created_at?: string | null
           desconto_percentual: number
+          descricao?: string | null
           id?: string
+          itens_permitidos?: string[] | null
           pedido_id?: string | null
+          tipo?: string
           usado?: boolean | null
           valido_ate: string
         }
@@ -702,8 +708,11 @@ export type Database = {
           codigo?: string
           created_at?: string | null
           desconto_percentual?: number
+          descricao?: string | null
           id?: string
+          itens_permitidos?: string[] | null
           pedido_id?: string | null
+          tipo?: string
           usado?: boolean | null
           valido_ate?: string
         }
