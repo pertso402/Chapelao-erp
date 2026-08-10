@@ -3,6 +3,7 @@ import { listarFornecedores, listarCompras } from "@/lib/purchasing/queries";
 import { listarEstoque } from "@/lib/inventory/queries";
 import { PageHeader } from "@/components/PageHeader";
 import { NovaCompraForm } from "@/components/purchasing/NovaCompraForm";
+import { ImportarXmlButton } from "@/components/purchasing/ImportarXmlButton";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +23,9 @@ export default async function ComprasPage() {
     <div>
       <PageHeader title="Compras" subtitle="Registre uma compra: ela entra no estoque e gera a conta a pagar." />
 
-      <div className="mb-5">
+      <div className="mb-5 flex flex-wrap gap-2">
         <NovaCompraForm fornecedores={fornecedores.map((f) => ({ id: f.id, nome: f.nome }))} itens={itensInv} />
+        <ImportarXmlButton itensEstoque={itensInv} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
