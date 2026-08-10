@@ -47,7 +47,10 @@ function soData(v: unknown): string | null {
 export function parseNfeXml(xmlText: string): { ok: true; data: NfeParsed } | { ok: false; erro: string } {
   let json: unknown;
   try {
-    const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_", trimValues: true });
+    // parseTagValue desligado: campos como nNF/serie/nDup são códigos fiscais
+    // (podem ter zeros à esquerda, ex. "001") — não números. Os campos que
+    // são de fato quantidades/valores já passam por num() abaixo.
+    const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_", trimValues: true, parseTagValue: false });
     json = parser.parse(xmlText);
   } catch {
     return { ok: false, erro: "Arquivo XML inválido — não foi possível ler." };
