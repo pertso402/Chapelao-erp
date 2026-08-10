@@ -4,6 +4,8 @@ export type ClienteLista = {
   id: string;
   nome: string;
   telefone: string;
+  endereco: string | null;
+  veioDoSalao: boolean;
   pedidos: number;
   totalGasto: number;
   ultimoPedido: string | null;
@@ -24,7 +26,7 @@ function segmentar(dias: number | null): ClienteLista["segmento"] {
 export async function listarClientesComMetricas(): Promise<ClienteLista[]> {
   const supabase = await createClient();
   const [{ data: clientes }, { data: pedidos }] = await Promise.all([
-    supabase.from("clientes").select("id, nome, telefone").order("nome"),
+    supabase.from("clientes").select("id, nome, telefone, endereco, tags").order("nome"),
     supabase.from("pedidos").select("cliente_id, total, status, created_at"),
   ]);
 
@@ -46,6 +48,8 @@ export async function listarClientesComMetricas(): Promise<ClienteLista[]> {
       id: c.id,
       nome: c.nome,
       telefone: c.telefone,
+      endereco: c.endereco,
+      veioDoSalao: (c.tags ?? []).includes("salao"),
       pedidos: m?.pedidos ?? 0,
       totalGasto: Number((m?.total ?? 0).toFixed(2)),
       ultimoPedido: m?.ultimo ?? null,

@@ -17,14 +17,16 @@ const COR_SEGMENTO: Record<ClienteLista["segmento"], string> = {
 export function ClientesTable({ clientes }: { clientes: ClienteLista[] }) {
   const [busca, setBusca] = useState("");
   const [segmento, setSegmento] = useState<string>("todos");
+  const [origem, setOrigem] = useState<string>("todos");
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return clientes
       .filter((c) => (segmento === "todos" ? true : c.segmento === segmento))
+      .filter((c) => (origem === "todos" ? true : origem === "salao" ? c.veioDoSalao : !c.veioDoSalao))
       .filter((c) => !q || c.nome.toLowerCase().includes(q) || c.telefone.includes(q))
       .sort((a, b) => (b.ultimoPedido ?? "").localeCompare(a.ultimoPedido ?? ""));
-  }, [clientes, busca, segmento]);
+  }, [clientes, busca, segmento, origem]);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
@@ -42,6 +44,11 @@ export function ClientesTable({ clientes }: { clientes: ClienteLista[] }) {
           <option value="inativo">Inativos</option>
           <option value="sem_pedido">Sem pedido</option>
         </select>
+        <select value={origem} onChange={(e) => setOrigem(e.target.value)} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-azul">
+          <option value="todos">Todas as origens</option>
+          <option value="salao">🏪 Veio no salão</option>
+          <option value="outros">Só WhatsApp/outros</option>
+        </select>
       </div>
 
       <div className="max-h-[70vh] overflow-y-auto">
@@ -50,6 +57,7 @@ export function ClientesTable({ clientes }: { clientes: ClienteLista[] }) {
             <tr className="text-left text-xs text-muted">
               <th className="pb-1">Nome</th>
               <th className="pb-1">Telefone</th>
+              <th className="pb-1">Endereço</th>
               <th className="pb-1 text-right">Pedidos</th>
               <th className="pb-1 text-right">Total gasto</th>
               <th className="pb-1">Último pedido</th>
@@ -59,8 +67,12 @@ export function ClientesTable({ clientes }: { clientes: ClienteLista[] }) {
           <tbody>
             {filtrados.map((c) => (
               <tr key={c.id} className="border-t border-border">
-                <td className="py-1.5 font-medium text-marino">{c.nome}</td>
+                <td className="py-1.5 font-medium text-marino">
+                  {c.nome}
+                  {c.veioDoSalao && <span className="ml-1 rounded bg-marino/10 px-1 py-0.5 text-[9px] font-bold text-marino">🏪 salão</span>}
+                </td>
                 <td className="py-1.5 text-muted">{c.telefone}</td>
+                <td className="max-w-[180px] truncate py-1.5 text-muted">{c.endereco ?? "—"}</td>
                 <td className="py-1.5 text-right text-marino">{c.pedidos}</td>
                 <td className="py-1.5 text-right font-semibold text-marino">{brl(c.totalGasto)}</td>
                 <td className="py-1.5 text-muted">{dt(c.ultimoPedido)}</td>

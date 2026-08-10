@@ -253,8 +253,14 @@ export function PdvForm({ produtos, empresas = [], mesaInicial }: { produtos: Pr
             </button>
           ))}
         </div>
-        {tipoEntrega === "delivery" && (
-          <input value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Endereço de entrega" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-azul" />
+        <input
+          value={endereco}
+          onChange={(e) => setEndereco(e.target.value)}
+          placeholder={tipoEntrega === "delivery" ? "Endereço de entrega" : "Endereço do cliente (opcional)"}
+          className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-azul"
+        />
+        {tipoEntrega === "retirada" && (
+          <p className="-mt-2 text-[11px] text-muted">Ajuda a segmentar ofertas por região depois.</p>
         )}
 
         <select value={pagamento} onChange={(e) => setPagamento(e.target.value)} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-azul">

@@ -70,23 +70,29 @@ export async function criarPedidoBalcao(input: {
   const desconto = Number(((subtotal * pct) / 100).toFixed(2));
   const total = Number((subtotal + taxa - desconto).toFixed(2));
 
-  // Cliente: reaproveita por telefone ou cria.
+  // Cliente: reaproveita por telefone ou cria. Toda venda fechada no PDV
+  // (balcão ou mesa) marca a tag "salao" — identifica quem foi atendido
+  // fisicamente na loja, diferente de um lead que só existe via WhatsApp.
   let clienteId: string;
   const { data: existente } = await supabase
     .from("clientes")
-    .select("id")
+    .select("id, tags")
     .eq("telefone", tel)
     .maybeSingle();
 
   if (existente) {
     clienteId = existente.id;
-    const patch: { nome: string; endereco?: string } = { nome: input.nome.trim() };
+    const tagsAtuais: string[] = existente.tags ?? [];
+    const patch: { nome: string; endereco?: string; tags: string[] } = {
+      nome: input.nome.trim(),
+      tags: tagsAtuais.includes("salao") ? tagsAtuais : [...tagsAtuais, "salao"],
+    };
     if (input.endereco?.trim()) patch.endereco = input.endereco.trim();
     await supabase.from("clientes").update(patch).eq("id", clienteId);
   } else {
     const { data: novo, error: cErr } = await supabase
       .from("clientes")
-      .insert({ nome: input.nome.trim(), telefone: tel, endereco: input.endereco?.trim() || null })
+      .insert({ nome: input.nome.trim(), telefone: tel, endereco: input.endereco?.trim() || null, tags: ["salao"] })
       .select("id")
       .single();
     if (cErr) return { ok: false as const, erro: cErr.message };
