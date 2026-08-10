@@ -26,7 +26,12 @@ export default async function FinanceiroPage() {
     <div>
       <div className="flex items-start justify-between">
         <PageHeader title="Financeiro" subtitle="Agenda, contas a receber (B2B) e contas a pagar." />
-        <NovaDespesaButton contas={contas.map((c) => ({ id: c.id, nome: c.nome, tipo: c.tipo }))} centros={centros.map((c) => ({ id: c.id, nome: c.nome }))} />
+        <div className="flex items-center gap-3">
+          <Link href="/financeiro/conciliacao" className="text-sm font-semibold text-azul hover:underline">
+            🏦 Conciliação bancária
+          </Link>
+          <NovaDespesaButton contas={contas.map((c) => ({ id: c.id, nome: c.nome, tipo: c.tipo }))} centros={centros.map((c) => ({ id: c.id, nome: c.nome }))} />
+        </div>
       </div>
 
       {/* Agenda financeira */}
