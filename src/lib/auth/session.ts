@@ -15,11 +15,19 @@ export type CurrentUser = {
 // Carrega o usuário atual com perfil, papéis e permissões efetivas.
 // Envolto em cache() do React: chamado uma vez por requisição, mesmo que
 // layout + guarda de página peçam o usuário separadamente.
+//
+// Usa getSession() (lê o cookie local, sem round-trip de rede) em vez de
+// getUser() (revalida contra o servidor de Auth): o middleware (updateSession)
+// já chamou getUser() para ESTA MESMA requisição e barrou/redirecionou sessão
+// inválida antes de chegar aqui — repetir a validação de rede só duplica
+// latência em toda navegação sem ganho de segurança real, já que a RLS do
+// Postgres valida a assinatura do JWT de qualquer forma em cada query.
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
   if (!user) return null;
 
   const [{ data: profile }, { data: roleRows }] = await Promise.all([

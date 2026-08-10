@@ -44,7 +44,7 @@ export default async function DashboardPage() {
   inicioMes.setDate(1);
   inicioMes.setHours(0, 0, 0, 0);
 
-  const [{ data: pedidos }, { data: pedidosB2B }, receber, cmvMes] = await Promise.all([
+  const [{ data: pedidos }, { data: pedidosB2B }, receber, cmvMes, pagar] = await Promise.all([
     supabase.from("pedidos").select("total, status"),
     supabase
       .from("pedidos")
@@ -53,8 +53,8 @@ export default async function DashboardPage() {
       .gte("created_at", inicioMes.toISOString()),
     resumoReceber(),
     cmvTeoricoMes(),
+    resumoPagar(),
   ]);
-  const pagar = await resumoPagar();
 
   const totalPedidos = pedidos?.length ?? 0;
   const faturamento = (pedidos ?? []).reduce((s, p) => s + Number(p.total ?? 0), 0);

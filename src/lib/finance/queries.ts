@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/database.generated";
 
@@ -44,7 +45,10 @@ export type RecebivelLista = {
   company_invoice_id: string | null;
 };
 
-export async function listarRecebiveis(): Promise<RecebivelLista[]> {
+// cache(): a página financeira chama isto e resumoReceber() (que também
+// chama isto por baixo) no mesmo Promise.all — sem cache() isso disparava
+// a mesma query 2x por carregamento de página.
+export const listarRecebiveis = cache(async (): Promise<RecebivelLista[]> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("receivables")
@@ -52,7 +56,7 @@ export async function listarRecebiveis(): Promise<RecebivelLista[]> {
     .order("status")
     .order("vencimento");
   return (data ?? []).map((r) => ({ ...r, valor: Number(r.valor) }));
-}
+});
 
 export async function resumoReceber(): Promise<{ pendente: number; recebido: number; vencido: number }> {
   const recs = await listarRecebiveis();
@@ -77,7 +81,8 @@ export type PagavelLista = {
   status: string;
 };
 
-export async function listarPagaveis(): Promise<PagavelLista[]> {
+// cache(): mesmo motivo de listarRecebiveis — resumoPagar() chama isto de novo.
+export const listarPagaveis = cache(async (): Promise<PagavelLista[]> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("payables")
@@ -87,7 +92,7 @@ export async function listarPagaveis(): Promise<PagavelLista[]> {
   return ((data ?? []) as unknown as {
     id: string; descricao: string; valor: number; vencimento: string | null; status: string; suppliers: { nome: string } | null;
   }[]).map((p) => ({ id: p.id, descricao: p.descricao, fornecedor: p.suppliers?.nome ?? null, valor: Number(p.valor), vencimento: p.vencimento, status: p.status }));
-}
+});
 
 export async function resumoPagar(): Promise<{ pendente: number; pago: number; vencido: number }> {
   const pgs = await listarPagaveis();
