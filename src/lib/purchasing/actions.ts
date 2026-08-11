@@ -103,6 +103,34 @@ export async function confirmarCompra(input: {
   return { ok: true as const, id: compra.id, total };
 }
 
+export async function criarFornecedor(input: { nome: string; cnpj?: string; whatsapp?: string; contato?: string }) {
+  const user = await requirePermission("purchasing.manage");
+  if (!input.nome?.trim()) return { ok: false as const, erro: "Informe o nome do fornecedor." };
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("suppliers")
+    .insert({
+      unit_id: user.profile?.unit_id ?? null,
+      nome: input.nome.trim(),
+      cnpj: input.cnpj?.trim() || null,
+      whatsapp: input.whatsapp?.trim() || null,
+      contato: input.contato?.trim() || null,
+    })
+    .select("id, nome")
+    .single();
+  if (error) return { ok: false as const, erro: error.message };
+
+  await supabase.from("audit_events").insert({
+    user_id: user.id, unit_id: user.profile?.unit_id ?? null,
+    acao: "fornecedor.criado", entidade: "suppliers", entidade_id: data.id,
+    valores_posteriores: { nome: data.nome }, origem: "erp",
+  });
+
+  revalidatePath("/compras");
+  return { ok: true as const, id: data.id, nome: data.nome };
+}
+
 export async function pagarPayable(payableId: string) {
   const user = await requirePermission("purchasing.manage");
   const supabase = await createClient();

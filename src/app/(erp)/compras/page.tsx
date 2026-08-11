@@ -4,6 +4,7 @@ import { listarEstoque } from "@/lib/inventory/queries";
 import { PageHeader } from "@/components/PageHeader";
 import { NovaCompraForm } from "@/components/purchasing/NovaCompraForm";
 import { ImportarXmlButton } from "@/components/purchasing/ImportarXmlButton";
+import { NovoFornecedorButton } from "@/components/purchasing/NovoFornecedorButton";
 
 export const dynamic = "force-dynamic";
 
@@ -66,15 +67,22 @@ export default async function ComprasPage() {
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-4">
-          <h2 className="mb-3 font-bold text-marino">Fornecedores</h2>
-          <div className="divide-y divide-border">
-            {fornecedores.map((f) => (
-              <div key={f.id} className="py-2 text-sm">
-                <div className="font-medium text-marino">{f.nome}</div>
-                <div className="text-xs text-muted">{f.cnpj} · {f.contato}</div>
-              </div>
-            ))}
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="font-bold text-marino">Fornecedores</h2>
+            <NovoFornecedorButton />
           </div>
+          {fornecedores.length === 0 ? (
+            <p className="text-sm text-muted">Nenhum fornecedor cadastrado ainda.</p>
+          ) : (
+            <div className="divide-y divide-border">
+              {fornecedores.map((f) => (
+                <div key={f.id} className="py-2 text-sm">
+                  <div className="font-medium text-marino">{f.nome}</div>
+                  <div className="text-xs text-muted">{f.cnpj || "sem CNPJ"} · {f.contato || "sem contato"}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
