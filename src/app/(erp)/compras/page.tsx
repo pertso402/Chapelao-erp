@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/auth/session";
 import { listarFornecedores, listarCompras } from "@/lib/purchasing/queries";
 import { listarEstoque } from "@/lib/inventory/queries";
+import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/PageHeader";
 import { NovaCompraForm } from "@/components/purchasing/NovaCompraForm";
 import { ImportarXmlButton } from "@/components/purchasing/ImportarXmlButton";
@@ -13,10 +14,12 @@ const dt = (iso: string) => new Date(iso).toLocaleDateString("pt-BR");
 
 export default async function ComprasPage() {
   await requirePermission("purchasing.manage");
-  const [fornecedores, compras, estoque] = await Promise.all([
+  const supabase = await createClient();
+  const [fornecedores, compras, estoque, { data: medidas }] = await Promise.all([
     listarFornecedores(),
     listarCompras(),
     listarEstoque(),
+    supabase.from("measurement_units").select("id, sigla").order("sigla"),
   ]);
   const itensInv = estoque.map((i) => ({ id: i.id, nome: i.nome, sigla: i.sigla, custo: i.custo_atual }));
 
@@ -25,7 +28,7 @@ export default async function ComprasPage() {
       <PageHeader title="Compras" subtitle="Registre uma compra: ela entra no estoque e gera a conta a pagar." />
 
       <div className="mb-5 flex flex-wrap gap-2">
-        <NovaCompraForm fornecedores={fornecedores.map((f) => ({ id: f.id, nome: f.nome }))} itens={itensInv} />
+        <NovaCompraForm fornecedores={fornecedores.map((f) => ({ id: f.id, nome: f.nome }))} itens={itensInv} medidas={medidas ?? []} />
         <ImportarXmlButton itensEstoque={itensInv} />
       </div>
 

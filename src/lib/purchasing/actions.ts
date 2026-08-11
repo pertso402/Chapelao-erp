@@ -5,14 +5,20 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 
 export type ItemCompra = {
-  inventory_item_id: string;
+  // Um dos dois: item já cadastrado (inventory_item_id) OU item novo
+  // (novoNome preenchido) — o produto da nota nem sempre bate com o que já
+  // existe no estoque, e forçar o uso de um item errado estraga o CMV.
+  inventory_item_id: string | null;
+  novoNome?: string;
+  novoMeasureId?: string | null;
   nome: string;
   quantidade: number;
   custo_unitario: number;
 };
 
-// Confirma uma compra: cria a compra, dá ENTRADA no estoque de cada item,
-// atualiza o custo do item e gera a CONTA A PAGAR do total.
+// Confirma uma compra: cria a compra, dá ENTRADA no estoque de cada item
+// (criando no estoque os que ainda não existem), atualiza o custo do item e
+// gera a CONTA A PAGAR do total.
 export async function confirmarCompra(input: {
   supplier_id: string;
   vencimento?: string | null;
@@ -24,9 +30,34 @@ export async function confirmarCompra(input: {
   const user = await requirePermission("purchasing.manage");
   const supabase = await createClient();
 
-  const itens = (input.itens ?? []).filter((i) => i.quantidade > 0);
+  const itensBrutos = (input.itens ?? []).filter((i) => i.quantidade > 0);
   if (!input.supplier_id) return { ok: false as const, erro: "Selecione o fornecedor." };
-  if (itens.length === 0) return { ok: false as const, erro: "Adicione ao menos um item." };
+  if (itensBrutos.length === 0) return { ok: false as const, erro: "Adicione ao menos um item." };
+
+  // Cria no estoque os itens que ainda não existem (marcados na linha com
+  // novoNome em vez de inventory_item_id).
+  const itens: { inventory_item_id: string; nome: string; quantidade: number; custo_unitario: number }[] = [];
+  for (const i of itensBrutos) {
+    if (i.inventory_item_id) {
+      itens.push({ inventory_item_id: i.inventory_item_id, nome: i.nome, quantidade: i.quantidade, custo_unitario: i.custo_unitario });
+      continue;
+    }
+    if (!i.novoNome?.trim()) return { ok: false as const, erro: "Item sem nome — selecione um item do estoque ou digite o nome do novo." };
+    const { data: criado, error } = await supabase
+      .from("inventory_items")
+      .insert({
+        nome: i.novoNome.trim(),
+        measure_id: i.novoMeasureId || null,
+        categoria: "Compra manual",
+        estoque_minimo: 0,
+        custo_atual: 0,
+        unit_id: user.profile?.unit_id ?? null,
+      })
+      .select("id")
+      .single();
+    if (error) return { ok: false as const, erro: `Item "${i.novoNome}": ${error.message}` };
+    itens.push({ inventory_item_id: criado.id, nome: i.novoNome.trim(), quantidade: i.quantidade, custo_unitario: i.custo_unitario });
+  }
 
   const total = Number(itens.reduce((s, i) => s + i.quantidade * i.custo_unitario, 0).toFixed(2));
 

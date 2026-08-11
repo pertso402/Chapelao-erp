@@ -7,11 +7,13 @@ import { createClient } from "@/lib/supabase/client";
 
 type Fornecedor = { id: string; nome: string };
 type ItemInv = { id: string; nome: string; sigla: string; custo: number };
-type Linha = { inventory_item_id: string; quantidade: string; custo_unitario: string };
+type Medida = { id: string; sigla: string };
+const NOVO = "__novo__";
+type Linha = { inventory_item_id: string; quantidade: string; custo_unitario: string; novoNome: string; novoMeasureId: string };
 
 const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function NovaCompraForm({ fornecedores, itens }: { fornecedores: Fornecedor[]; itens: ItemInv[] }) {
+export function NovaCompraForm({ fornecedores, itens, medidas = [] }: { fornecedores: Fornecedor[]; itens: ItemInv[]; medidas?: Medida[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [aberto, setAberto] = useState(false);
@@ -27,13 +29,13 @@ export function NovaCompraForm({ fornecedores, itens }: { fornecedores: Forneced
 
   function addLinha() {
     const first = itens[0];
-    setLinhas((l) => [...l, { inventory_item_id: first?.id ?? "", quantidade: "", custo_unitario: String(first?.custo ?? 0) }]);
+    setLinhas((l) => [...l, { inventory_item_id: first?.id ?? "", quantidade: "", custo_unitario: String(first?.custo ?? 0), novoNome: "", novoMeasureId: medidas[0]?.id ?? "" }]);
   }
   function updLinha(idx: number, campo: keyof Linha, val: string) {
     setLinhas((ls) => ls.map((l, i) => {
       if (i !== idx) return l;
       const nova = { ...l, [campo]: val };
-      if (campo === "inventory_item_id") {
+      if (campo === "inventory_item_id" && val !== NOVO) {
         const it = itens.find((x) => x.id === val);
         if (it) nova.custo_unitario = String(it.custo);
       }
@@ -66,7 +68,17 @@ export function NovaCompraForm({ fornecedores, itens }: { fornecedores: Forneced
         supplier_id: fornecedor,
         vencimento: vencimento || null,
         itens: linhas.map((l) => {
-          const it = itens.find((x) => x.id === l.inventory_item_id)!;
+          if (l.inventory_item_id === NOVO) {
+            return {
+              inventory_item_id: null,
+              novoNome: l.novoNome,
+              novoMeasureId: l.novoMeasureId || null,
+              nome: l.novoNome,
+              quantidade: Number(l.quantidade),
+              custo_unitario: Number(l.custo_unitario),
+            };
+          }
+          const it = itens.find((x) => x.id === l.inventory_item_id);
           return { inventory_item_id: l.inventory_item_id, nome: it?.nome ?? "", quantidade: Number(l.quantidade), custo_unitario: Number(l.custo_unitario) };
         }),
         anexo_path,
@@ -105,20 +117,36 @@ export function NovaCompraForm({ fornecedores, itens }: { fornecedores: Forneced
       <div className="space-y-2">
         {linhas.map((l, idx) => {
           const it = itens.find((x) => x.id === l.inventory_item_id);
+          const ehNovo = l.inventory_item_id === NOVO;
           return (
-            <div key={idx} className="flex items-end gap-2">
-              <label className="flex-1 text-xs text-muted">Item
-                <select value={l.inventory_item_id} onChange={(e) => updLinha(idx, "inventory_item_id", e.target.value)} className={input + " mt-0.5 w-full"}>
-                  {itens.map((i) => <option key={i.id} value={i.id}>{i.nome}</option>)}
-                </select>
-              </label>
-              <label className="text-xs text-muted">Qtd ({it?.sigla})
-                <input type="number" value={l.quantidade} onChange={(e) => updLinha(idx, "quantidade", e.target.value)} className={input + " w-20"} />
-              </label>
-              <label className="text-xs text-muted">Custo un.
-                <input type="number" value={l.custo_unitario} onChange={(e) => updLinha(idx, "custo_unitario", e.target.value)} className={input + " w-24"} />
-              </label>
-              <button onClick={() => rmLinha(idx)} className="pb-1.5 text-xs text-rojo hover:underline">remover</button>
+            <div key={idx} className="space-y-1 rounded-lg border border-border p-2">
+              <div className="flex items-end gap-2">
+                <label className="flex-1 text-xs text-muted">Item
+                  <select value={l.inventory_item_id} onChange={(e) => updLinha(idx, "inventory_item_id", e.target.value)} className={input + " mt-0.5 w-full"}>
+                    {itens.map((i) => <option key={i.id} value={i.id}>{i.nome}</option>)}
+                    <option value={NOVO}>➕ Não achei — cadastrar item novo</option>
+                  </select>
+                </label>
+                <label className="text-xs text-muted">Qtd {!ehNovo && `(${it?.sigla})`}
+                  <input type="number" value={l.quantidade} onChange={(e) => updLinha(idx, "quantidade", e.target.value)} className={input + " w-20"} />
+                </label>
+                <label className="text-xs text-muted">Custo un.
+                  <input type="number" value={l.custo_unitario} onChange={(e) => updLinha(idx, "custo_unitario", e.target.value)} className={input + " w-24"} />
+                </label>
+                <button onClick={() => rmLinha(idx)} className="pb-1.5 text-xs text-rojo hover:underline">remover</button>
+              </div>
+              {ehNovo && (
+                <div className="flex items-end gap-2 rounded-lg bg-amarillo/10 p-2">
+                  <label className="flex-1 text-xs text-muted">Nome do item novo *
+                    <input value={l.novoNome} onChange={(e) => updLinha(idx, "novoNome", e.target.value)} placeholder="Ex.: Costela Minga Bovina" className={input + " mt-0.5 w-full"} />
+                  </label>
+                  <label className="text-xs text-muted">Unidade
+                    <select value={l.novoMeasureId} onChange={(e) => updLinha(idx, "novoMeasureId", e.target.value)} className={input + " mt-0.5"}>
+                      {medidas.map((m) => <option key={m.id} value={m.id}>{m.sigla}</option>)}
+                    </select>
+                  </label>
+                </div>
+              )}
             </div>
           );
         })}
